@@ -18,6 +18,13 @@ class NavigatorCubit extends Cubit<NavigatorState> {
             builder: (BuildContext context) => const MainFeedWidget()));
   }
 
+  void showLoginPage(BuildContext context) {
+    Navigator.pushReplacement(
+        context,
+        MaterialPageRoute<void>(
+            builder: (BuildContext context) => const LoginWidget()));
+  }
+
   void showPdfReader(BuildContext context, Group group) {
     Navigator.push(
         context,

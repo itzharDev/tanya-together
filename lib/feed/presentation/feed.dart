@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tanya/auth/presentation/cubit/auth_cubit.dart';
 import 'package:tanya/core/consts/assets.dart';
@@ -47,6 +48,12 @@ class _MainFeedWidgetState extends State<MainFeedWidget>
       setState(() {
         currentTabsIndex = _tabController.index;
       });
+    });
+
+    locator.get<AuthCubit>().stream.listen((event) {
+      if (event is UserLogedOut) {
+        locator.get<NavigatorCubit>().showLoginScreen(context);
+      }
     });
   }
 
@@ -114,19 +121,32 @@ class _MainFeedWidgetState extends State<MainFeedWidget>
                   SizedBox(
                     width: 10,
                   ),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(36.0),
-                    child: Image.network(
-                      locator.get<AuthCubit>().currentUser!.get('photoUrl'),
-                      width: SizeConfig.screenWidth * 0.1,
+                  if (locator.get<AuthCubit>().currentUser != null &&
+                      locator.get<AuthCubit>().currentUser?.get('photoUrl') !=
+                          null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(36.0),
+                      child: Image.network(
+                        locator.get<AuthCubit>().currentUser?.get('photoUrl'),
+                        width: SizeConfig.screenWidth * 0.1,
+                      ),
                     ),
-                  ),
+                  if (locator.get<AuthCubit>().currentUser == null)
+                    const Icon(
+                      FontAwesomeIcons.user,
+                      color: Colors.white,
+                    ),
                   const Spacer(),
                   Image.asset(TanyaIcons.tanya_logo),
                   const Spacer(),
-                  const Icon(
-                    Icons.more_vert_rounded,
-                    color: Colors.white,
+                  GestureDetector(
+                    onTap: () {
+                      locator.get<AuthCubit>().logOut();
+                    },
+                    child: const Icon(
+                      Icons.more_vert_rounded,
+                      color: Colors.white,
+                    ),
                   ),
                   SizedBox(
                     width: 10,
@@ -146,12 +166,14 @@ class _MainFeedWidgetState extends State<MainFeedWidget>
                           color: Colors.white, fontSize: userNameSize),
                     ),
                     Text(
-                      locator
-                          .get<AuthCubit>()
-                          .currentUser!
-                          .get('displayName')
-                          .toString()
-                          .split(" ")[0],
+                      locator.get<AuthCubit>().currentUser != null
+                          ? locator
+                              .get<AuthCubit>()
+                              .currentUser!
+                              .get('displayName')
+                              .toString()
+                              .split(' ')[0]
+                          : 'אורח',
                       textAlign: TextAlign.right,
                       textDirection: TextDirection.rtl,
                       style: TextStyle(

@@ -9,6 +9,8 @@ final class UserLogedIn extends AuthState {}
 
 final class UserLogedOut extends AuthState {}
 
+final class OtpSent extends AuthState {}
+
 final class UserReady extends AuthState {
   final ParseUser user;
   UserReady(this.user);
