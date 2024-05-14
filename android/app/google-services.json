@@ -1,0 +1,138 @@
+{
+  "project_info": {
+    "project_number": "217335510648",
+    "firebase_url": "https://socialtanya-2d181.firebaseio.com",
+    "project_id": "socialtanya-2d181",
+    "storage_bucket": "socialtanya-2d181.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217335510648:android:0671a7196a85282d5adf8d",
+        "android_client_info": {
+          "package_name": "asdf.com"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "217335510648-g97jv4njnd3ir6n7v2pjcfqrtreqjk7l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEm7YaRM2dh5VEyxgv3jys0Cid-YkJY6Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "217335510648-g97jv4njnd3ir6n7v2pjcfqrtreqjk7l.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "217335510648-2nvh7jk26pc22uj9anqvr650sk65epbo.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ssa.socialtanya",
+                "app_store_id": "1194029706"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217335510648:android:4adc2a9c3e39747b5adf8d",
+        "android_client_info": {
+          "package_name": "com.example.tanya"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "217335510648-g97jv4njnd3ir6n7v2pjcfqrtreqjk7l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEm7YaRM2dh5VEyxgv3jys0Cid-YkJY6Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "217335510648-g97jv4njnd3ir6n7v2pjcfqrtreqjk7l.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "217335510648-2nvh7jk26pc22uj9anqvr650sk65epbo.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ssa.socialtanya",
+                "app_store_id": "1194029706"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217335510648:android:04ea88d18ba6a91d",
+        "android_client_info": {
+          "package_name": "com.ssa.socialtanya"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "217335510648-ddf60gbbbl01l2n87hkgi9q3ucqhm947.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ssa.socialtanya",
+            "certificate_hash": "f6e4face9e7f950c170646fa4bbe20cc50cea3ba"
+          }
+        },
+        {
+          "client_id": "217335510648-obe8rladfoj6aj9ultellm4b2etk35lc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ssa.socialtanya",
+            "certificate_hash": "dfa7c6f23940597f934750b6aec9388e8c5ab51c"
+          }
+        },
+        {
+          "client_id": "217335510648-g97jv4njnd3ir6n7v2pjcfqrtreqjk7l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEm7YaRM2dh5VEyxgv3jys0Cid-YkJY6Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "217335510648-g97jv4njnd3ir6n7v2pjcfqrtreqjk7l.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "217335510648-2nvh7jk26pc22uj9anqvr650sk65epbo.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ssa.socialtanya",
+                "app_store_id": "1194029706"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
