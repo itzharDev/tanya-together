@@ -11,7 +11,7 @@ class SizeConfig {
   static late double _safeAreaVertical;
   static late double safeBlockHorizontal;
   static late double safeBlockVertical;
-  static late double safeIsMobile = 1.0;
+  static double safeIsMobile = 1.0;
   static late double fullScreenWidth;
   static late double fullScreenHeight;
 

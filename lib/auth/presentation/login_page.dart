@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sign_in_button/sign_in_button.dart';
 import 'package:tanya/auth/presentation/cubit/auth_cubit.dart';
 import 'package:tanya/core/consts/assets.dart';
 import 'package:tanya/core/cubit/navigator_cubit.dart';
@@ -62,7 +60,7 @@ class _LoginWidgetState extends State<LoginWidget> {
               'ברוכים הבאים לתניא המחולק',
               style: GoogleFonts.assistant(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF04478E),
+                  color: const Color(0xFF04478E),
                   fontSize: SizeConfig.screenWidth * 0.06),
             ),
             const SizedBox(
@@ -121,7 +119,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                     ),
                   );
                 } else {
-                  return SizedBox();
+                  return const SizedBox();
                 }
               },
             ),
@@ -142,11 +140,11 @@ class _LoginWidgetState extends State<LoginWidget> {
                     color: Colors.grey,
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   width: 10,
                 ),
-                Text('או'),
-                SizedBox(
+                const Text('או'),
+                const SizedBox(
                   width: 10,
                 ),
                 Expanded(
@@ -157,7 +155,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                 ),
               ],
             ),
-            SizedBox(
+            const SizedBox(
               height: 20,
             ),
             OutlinedButton(
@@ -165,13 +163,14 @@ class _LoginWidgetState extends State<LoginWidget> {
                 locator.get<AuthCubit>().loginGoogle();
               },
               style: ButtonStyle(
-                shape: MaterialStateProperty.all(
+                shape: WidgetStateProperty.all(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(5.0),
                   ),
                 ),
-                side: MaterialStateProperty.all(
-                  BorderSide(color: Colors.grey), // Set the border color here
+                side: WidgetStateProperty.all(
+                  const BorderSide(
+                      color: Colors.grey), // Set the border color here
                 ),
               ),
               child: Padding(
@@ -192,13 +191,14 @@ class _LoginWidgetState extends State<LoginWidget> {
                 ),
               ),
             ),
-            Spacer(),
+            const Spacer(),
             Row(
               children: [
                 Padding(
                   padding: const EdgeInsets.all(0),
                   child: Checkbox(
-                    visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                    visualDensity:
+                        const VisualDensity(horizontal: -4, vertical: -4),
                     value: true,
                     activeColor: const Color(0xFF04478E),
                     onChanged: (value) {},
@@ -207,33 +207,33 @@ class _LoginWidgetState extends State<LoginWidget> {
                 Text(
                   'קראתי ואני מאשר/ת את',
                   style: GoogleFonts.assistant(
-                      color: Color(0xFF262626),
+                      color: const Color(0xFF262626),
                       fontSize: SizeConfig.screenWidth * 0.04),
                 ),
-                Text(' '),
+                const Text(' '),
                 Text(
                   'מדיניות ותנאי השימוש',
                   style: GoogleFonts.assistant(
                       decoration: TextDecoration.underline,
-                      color: Color(0xFF262626),
+                      color: const Color(0xFF262626),
                       fontSize: SizeConfig.screenWidth * 0.04),
                 ),
               ],
             ),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
             SizedBox(
               width: SizeConfig.screenWidth,
               child: TextButton(
                 style: ButtonStyle(
-                  shape: MaterialStateProperty.all<OutlinedBorder>(
+                  shape: WidgetStateProperty.all<OutlinedBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(3.0),
                     ),
                   ),
                   backgroundColor:
-                      MaterialStateProperty.all<Color>(const Color(0xff027EC5)),
+                      WidgetStateProperty.all<Color>(const Color(0xff027EC5)),
                 ),
                 onPressed: () {
                   locator.get<AuthCubit>().loginWithPhone();

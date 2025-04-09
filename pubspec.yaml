@@ -2,7 +2,7 @@ name: tanya
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.3.4 <4.0.0'
+  sdk: ">=3.3.4 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -31,7 +31,9 @@ dependencies:
   bloc: ^8.1.2
   change_app_package_name: ^1.1.0
   cupertino_icons: ^1.0.6
+  custom_sliding_segmented_control: ^1.8.3
   dio: ^5.4.0
+  dropdown_button2: ^2.3.9
   equatable: ^2.0.5
   firebase_analytics: ^10.8.4
   firebase_auth: ^4.17.3
@@ -50,19 +52,22 @@ dependencies:
   parse_server_sdk_flutter: ^7.0.1
   retrofit: ^4.0.3
   sign_in_button: ^3.2.0
+  socket_io_client: ^2.0.3+1
   syncfusion_flutter_pdfviewer: ^20.4.54
+  url_launcher: ^6.3.1
+  url_launcher_ios: ^6.3.2
+  webview_flutter: ^4.7.0
 
 dev_dependencies:
   flutter_lints: ^2.0.0
   flutter_test:
     sdk: flutter
   json_serializable: ^6.7.1
-  retrofit_generator: '>=5.0.0 <6.0.0'
+  retrofit_generator: ">=5.0.0 <6.0.0"
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

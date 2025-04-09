@@ -1,5 +1,4 @@
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:tanya/auth/presentation/login_page.dart';
 import 'package:tanya/feed/group.dart';

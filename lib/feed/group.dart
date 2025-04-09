@@ -8,13 +8,15 @@ class Group {
   String? ownerName;
   String? ownerEmail;
   String? shareLink;
+  String? bookType;
+  String? intention;
   bool? global;
   String? name;
   double? created;
   int? max;
-  Map<String, dynamic>? book;
-  Map<String, dynamic>? inProgress;
-  Map<String, dynamic>? members;
+  List? book;
+  List? inProgress;
+  List? members;
   Group({
     this.description,
     this.id,
@@ -30,6 +32,8 @@ class Group {
     this.book,
     this.inProgress,
     this.members,
+    this.bookType,
+    this.intention,
   });
 
   Map<String, dynamic> toMap() {
@@ -48,6 +52,8 @@ class Group {
       'book': book,
       'inProgress': inProgress,
       'members': members,
+      'bookType': bookType,
+      'intention': intention,
     };
   }
 
@@ -64,10 +70,11 @@ class Group {
       name: map['name'],
       created: map['created']?.toDouble(),
       max: map['max']?.toInt(),
-      book: Map<String, dynamic>.from(map['book'] ?? {}),
-      // book: Map<String, dynamic>.from({}),
-      inProgress: Map<String, dynamic>.from(map['inProgress'] ?? {}),
-      members: Map<String, dynamic>.from(map['members'] ?? {}),
+      book: map['book'] ?? [],
+      inProgress: map['inProgress'] ?? [],
+      members: map['members'] ?? [],
+      bookType: map['bookType'],
+      intention: map['intention'] ?? [],
     );
   }
 

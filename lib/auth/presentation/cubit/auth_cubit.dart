@@ -4,7 +4,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:meta/meta.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:tanya/core/cubit/loading_cubit.dart';
-import 'package:tanya/core/cubit/navigator_cubit.dart';
 import 'package:tanya/core/ioc.dart';
 
 part 'auth_state.dart';
@@ -76,7 +75,7 @@ class AuthCubit extends Cubit<AuthState> {
     locator
         .get<LoadingCubit>()
         .emit(LoadingStateChanged(loading: true, text: 'אנא המתן'));
-    if (this.verificationId.isNotEmpty && this.otp.length == 6) {
+    if (verificationId.isNotEmpty && otp.length == 6) {
       verifyOtp(otp);
     } else {
       await FirebaseAuth.instance.verifyPhoneNumber(
@@ -141,6 +140,7 @@ class AuthCubit extends Cubit<AuthState> {
     } on Exception catch (e) {
       print('error');
       print(e);
+      locator.get<LoadingCubit>().emit(LoadingStateChanged(loading: false));
       // TODO
     }
   }

@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -49,6 +46,16 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyBnELeq1-eMVIK2y8vhZ0fBswxtoh7zigk',
+    appId: '1:217335510648:web:be672e43cb962fea5adf8d',
+    messagingSenderId: '217335510648',
+    projectId: 'socialtanya-2d181',
+    authDomain: 'socialtanya-2d181.firebaseapp.com',
+    databaseURL: 'https://socialtanya-2d181.firebaseio.com',
+    storageBucket: 'socialtanya-2d181.appspot.com',
+  );
+
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBEm7YaRM2dh5VEyxgv3jys0Cid-YkJY6Q',
     appId: '1:217335510648:android:04ea88d18ba6a91d',
@@ -65,8 +72,10 @@ class DefaultFirebaseOptions {
     projectId: 'socialtanya-2d181',
     databaseURL: 'https://socialtanya-2d181.firebaseio.com',
     storageBucket: 'socialtanya-2d181.appspot.com',
-    androidClientId: '217335510648-ddf60gbbbl01l2n87hkgi9q3ucqhm947.apps.googleusercontent.com',
-    iosClientId: '217335510648-2nvh7jk26pc22uj9anqvr650sk65epbo.apps.googleusercontent.com',
+    androidClientId:
+        '217335510648-ddf60gbbbl01l2n87hkgi9q3ucqhm947.apps.googleusercontent.com',
+    iosClientId:
+        '217335510648-2nvh7jk26pc22uj9anqvr650sk65epbo.apps.googleusercontent.com',
     iosBundleId: 'com.ssa.socialtanya',
   );
 }
