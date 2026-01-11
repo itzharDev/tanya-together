@@ -171,3 +171,11 @@ Both apps connect to:
 - **Shared Backend**: Both Flutter and React apps use the same Parse Server and Firebase instance
 - **State Management**: Flutter uses Cubit pattern; React uses Context API
 - **Real-time Features**: Both apps use Socket.io for live updates in reading groups
+- **Anonymous Access**: 
+  - Anonymous users can browse all public groups
+  - Anonymous users can read any part and mark parts as finished
+  - Authentication is ONLY required for creating new groups
+  - Progress tracking:
+    - When a user opens a part to read, it's added to `inProgress` array (both authenticated and anonymous)
+    - When finished reading, it moves from `inProgress` to `book` array
+    - If user leaves without finishing, it's automatically removed from `inProgress`
