@@ -41,18 +41,52 @@ export default function Feed() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const [counts, setCounts] = useState({ global: 0, shared: 0, private: 0 });
+  const [groupsCache, setGroupsCache] = useState({ global: null, shared: null, private: null });
 
   useEffect(() => {
     if (!authLoading) {
+      fetchCounts();
       fetchGroups();
     }
   }, [currentUser, authLoading]);
+
+  useEffect(() => {
+    // When tab switches, check cache first
+    if (!authLoading && currentUser) {
+      if (groupsCache[activeTab]) {
+        setGroups(groupsCache[activeTab]);
+      } else {
+        fetchGroups();
+      }
+    }
+  }, [activeTab]);
 
   const fetchGroups = async () => {
     setLoading(true);
     try {
       const query = new Parse.Query('NewGroup');
-      query.limit(1000); // Fetch all for clientside filtering as per Flutter app logic (simplified)
+      
+      // Apply server-side filtering based on activeTab and user
+      if (!currentUser) {
+        // Anonymous users: only global groups
+        query.equalTo('global', true);
+      } else {
+        const email = currentUser.get('email');
+        
+        switch (activeTab) {
+          case 'global':
+            query.equalTo('global', true);
+            break;
+          case 'shared':
+            query.equalTo('members', email);
+            break;
+          case 'private':
+            query.equalTo('ownerEmail', email);
+            break;
+        }
+      }
+      
+      query.limit(1000);
       const results = await query.find();
       
       const parsedGroups = results.map(g => ({
@@ -61,24 +95,43 @@ export default function Feed() {
       }));
 
       setGroups(parsedGroups);
-
-      // Calc counts (only if user is logged in)
+      
+      // Cache the results for this tab
       if (currentUser) {
-        const email = currentUser.get('email');
-        const g_global = parsedGroups.filter(g => !g.global).length;
-        const g_shared = parsedGroups.filter(g => g.members && g.members.includes(email)).length;
-        const g_private = parsedGroups.filter(g => g.ownerEmail === email).length;
-        setCounts({ global: g_global, shared: g_shared, private: g_private });
-      } else {
-        // For anonymous users, just show global groups
-        const g_global = parsedGroups.filter(g => !g.global).length;
-        setCounts({ global: g_global, shared: 0, private: 0 });
+        setGroupsCache(prev => ({ ...prev, [activeTab]: parsedGroups }));
       }
 
     } catch (error) {
       console.error("Error fetching groups:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCounts = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const email = currentUser.get('email');
+      
+      // Count global groups
+      const globalQuery = new Parse.Query('NewGroup');
+      globalQuery.equalTo('global', true);
+      const g_global = await globalQuery.count();
+      
+      // Count shared groups
+      const sharedQuery = new Parse.Query('NewGroup');
+      sharedQuery.equalTo('members', email);
+      const g_shared = await sharedQuery.count();
+      
+      // Count private groups
+      const privateQuery = new Parse.Query('NewGroup');
+      privateQuery.equalTo('ownerEmail', email);
+      const g_private = await privateQuery.count();
+      
+      setCounts({ global: g_global, shared: g_shared, private: g_private });
+    } catch (error) {
+      console.error("Error fetching counts:", error);
     }
   };
 
@@ -109,7 +162,8 @@ export default function Feed() {
       newGroup.set('intention', groupData.groupIntention);
       newGroup.set('book', []);
       newGroup.set('inProgress', []);
-      newGroup.set('members', []);
+      newGroup.set('inProgressData', {}); // New field to track timestamps
+      newGroup.set('members', [currentUser.get('email')]); // Add creator as member
       newGroup.set('booksReaded', 0);
       
       // Set max based on book type
@@ -123,9 +177,10 @@ export default function Feed() {
 
       await newGroup.save();
       
-      // Close modal and refresh groups
+      // Close modal, clear cache, switch to private tab, and refresh
       setIsModalOpen(false);
-      fetchGroups();
+      setGroupsCache({ global: null, shared: null, private: null });
+      setActiveTab('private');
       
       alert('הקבוצה נוצרה בהצלחה!');
     } catch (error) {
@@ -134,28 +189,8 @@ export default function Feed() {
     }
   };
 
-  // Filter groups for display
-  const getDisplayedGroups = () => {
-    if (!currentUser) {
-      // For anonymous users, show only global groups
-      return groups.filter(g => !g.global);
-    }
-    
-    const email = currentUser.get('email');
-    
-    switch (activeTab) {
-      case 'global':
-        return groups.filter(g => !g.global);
-      case 'shared':
-        return groups.filter(g => g.members && g.members.includes(email));
-      case 'private':
-        return groups.filter(g => g.ownerEmail === email);
-      default:
-        return [];
-    }
-  };
-
-  const displayedGroups = getDisplayedGroups();
+  // Groups are already filtered from server, just return them
+  const displayedGroups = groups;
 
   // Show loading while auth is initializing
   if (authLoading) {
@@ -203,7 +238,7 @@ export default function Feed() {
                       <span> ,שלום </span>
                   </div>
                   <div className="text-[#E9F4FF]/80 text-sm">
-                     ?איזה ספרים תרצו להשלים היום
+                     איזה ספרים תרצו להשלים היום?
                   </div>
               </div>
               

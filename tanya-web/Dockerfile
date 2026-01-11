@@ -37,6 +37,7 @@ EXPOSE 80
 
 # Set production environment
 ENV NODE_ENV=production
+ENV PORT=80
 
 # Start the server
 CMD ["node", "server.js"]

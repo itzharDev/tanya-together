@@ -58,7 +58,7 @@ async function createServer() {
       
       if (initialData && initialData.name) {
         title = `ספר ${initialData.name} - תניא המחולק`
-        description = `קרא את ספר ${initialData.name} - תניא המחולק`
+        description = initialData.description || `קרא את ספר ${initialData.name} - תניא המחולק`
         image = initialData.bookImage || 'https://tanya-together.dvarmalchus.co.il/tanya-logo-preview.png'
       } else {
         // Default meta tags for non-group pages

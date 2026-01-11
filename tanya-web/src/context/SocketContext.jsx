@@ -37,7 +37,7 @@ export const SocketProvider = ({ children }) => {
     });
 
     newSocket.on('connect', () => {
-      console.log('Socket connected');
+      // Socket connected
     });
 
     newSocket.on('message', (data) => {
@@ -47,7 +47,7 @@ export const SocketProvider = ({ children }) => {
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Socket disconnected');
+      // Socket disconnected
     });
 
     setSocket(newSocket);

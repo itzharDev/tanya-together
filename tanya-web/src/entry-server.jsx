@@ -41,6 +41,7 @@ export async function render(url) {
         initialData = {
           id: group.id,
           name: group.get('name'),
+          description: group.get('description') || null,
           bookImage: group.get('bookImage') || null,
         }
         console.log('SSR: Successfully fetched group:', initialData.name)

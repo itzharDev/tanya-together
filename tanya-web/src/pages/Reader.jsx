@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSSR } from '../context/SSRContext';
 import Parse from '../services/parse';
 import { getHebrewGematria } from '../utils/hebrew';
-import { FaArrowLeft, FaEllipsisV, FaCheck } from 'react-icons/fa';
+import { FaArrowLeft, FaEllipsisV, FaCheck, FaRandom } from 'react-icons/fa';
 import tanyaIcon from '../assets/icons/tanya_icon.svg'; 
 
 export default function Reader() {
@@ -16,12 +16,37 @@ export default function Reader() {
   const [loading, setLoading] = useState(true);
   const [part, setPart] = useState(null);
   const [url, setUrl] = useState('');
+  const [showJoinPopup, setShowJoinPopup] = useState(false);
+  const [membershipChecked, setMembershipChecked] = useState(false);
 
   useEffect(() => {
     if (groupId) {
       loadGroupAndPart();
     }
   }, [groupId]);
+
+  // Check membership after group loads (client-side only)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !group || membershipChecked) return;
+    
+    const checkMembership = () => {
+      const members = group.members || [];
+      const userEmail = currentUser?.get('email');
+      
+      // If user is logged in and not a member, show popup
+      if (currentUser && userEmail && !members.includes(userEmail)) {
+        setShowJoinPopup(true);
+      }
+      // If user is not logged in, show popup to ask if they want to join
+      else if (!currentUser) {
+        setShowJoinPopup(true);
+      }
+      
+      setMembershipChecked(true);
+    };
+    
+    checkMembership();
+  }, [group, currentUser, membershipChecked]);
 
   // Cleanup: remove part from inProgress when component unmounts (client-side only)
   useEffect(() => {
@@ -32,12 +57,16 @@ export default function Reader() {
         // Async cleanup - remove from inProgress if user leaves without finishing
         const cleanup = async () => {
           try {
-            console.log('Component unmounting - removing part from inProgress:', part);
             const query = new Parse.Query('NewGroup');
             const g = await query.get(group.id);
-            let inProgress = g.get('inProgress') || [];
-            inProgress = inProgress.filter(p => p !== part.toString());
-            g.set('inProgress', inProgress);
+            const partStr = part.toString();
+            const inProgressData = g.get('inProgressData') || {};
+            
+            // Remove from inProgressData
+            delete inProgressData[partStr];
+            
+            g.set('inProgressData', inProgressData);
+            g.set('inProgress', Object.keys(inProgressData)); // Update legacy array
             await g.save();
           } catch (error) {
             console.error('Cleanup error:', error);
@@ -85,6 +114,33 @@ export default function Reader() {
     return available[randomIndex];
   };
 
+  const cleanupStaleInProgress = async (group) => {
+    // Clean up parts that have been in progress for more than 2 hours
+    const TWO_HOURS = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+    const now = Date.now();
+    
+    const inProgressData = group.get('inProgressData') || {};
+    const updatedInProgressData = {};
+    
+    // Keep only entries that are less than 2 hours old
+    Object.keys(inProgressData).forEach(partNum => {
+      const timestamp = inProgressData[partNum];
+      if (now - timestamp < TWO_HOURS) {
+        updatedInProgressData[partNum] = timestamp;
+      }
+    });
+    
+    // Update if there were any changes
+    if (Object.keys(updatedInProgressData).length !== Object.keys(inProgressData).length) {
+      group.set('inProgressData', updatedInProgressData);
+      // Also update the legacy inProgress array for backward compatibility
+      group.set('inProgress', Object.keys(updatedInProgressData));
+      await group.save();
+    }
+    
+    return updatedInProgressData;
+  };
+
   const loadGroupAndPart = async () => {
     setLoading(true);
     try {
@@ -92,12 +148,15 @@ export default function Reader() {
         const query = new Parse.Query('NewGroup');
         const g = await query.get(groupId);
         
+        // Clean up stale inProgress entries first
+        const cleanedInProgressData = await cleanupStaleInProgress(g);
+        
         let localGroup = {
             id: g.id,
             ...g.attributes,
             // Ensure arrays exist
             book: g.get('book') || [],
-            inProgress: g.get('inProgress') || [],
+            inProgress: Object.keys(cleanedInProgressData),
             max: g.get('max') || 0,
             bookType: g.get('bookType') || '1',
             name: g.get('name'),
@@ -121,14 +180,17 @@ export default function Reader() {
             return;
         }
 
-        console.log('Selected Part:', selectedPart);
-
-        // Update Server: Add to inProgress (for all users - authenticated and anonymous)
-        if (!localGroup.inProgress.includes(selectedPart.toString())) {
-             localGroup.inProgress.push(selectedPart.toString());
-             g.set('inProgress', localGroup.inProgress);
+        // Update Server: Add to inProgress with timestamp
+        const partStr = selectedPart.toString();
+        if (!localGroup.inProgress.includes(partStr)) {
+             const inProgressData = g.get('inProgressData') || {};
+             inProgressData[partStr] = Date.now(); // Store current timestamp
+             
+             g.set('inProgressData', inProgressData);
+             g.set('inProgress', Object.keys(inProgressData)); // Update legacy array
              await g.save();
-             console.log('Added part to inProgress:', selectedPart);
+             
+             localGroup.inProgress.push(partStr);
         }
 
         // Construct URL
@@ -143,6 +205,7 @@ export default function Reader() {
         setGroup(localGroup);
         setPart(selectedPart);
         setUrl(contentUrl);
+        setMembershipChecked(false); // Reset for new group load
 
     } catch (error) {
         console.error("Error loading group:", error);
@@ -159,16 +222,18 @@ export default function Reader() {
       if (!group || !part) return;
       
       try {
-          console.log('Removing part from inProgress (user left without finishing):', part);
           const query = new Parse.Query('NewGroup');
           const g = await query.get(group.id);
           
-          let inProgress = g.get('inProgress') || [];
-          inProgress = inProgress.filter(p => p !== part.toString());
+          const partStr = part.toString();
+          const inProgressData = g.get('inProgressData') || {};
           
-          g.set('inProgress', inProgress);
+          // Remove from inProgressData
+          delete inProgressData[partStr];
+          
+          g.set('inProgressData', inProgressData);
+          g.set('inProgress', Object.keys(inProgressData)); // Update legacy array
           await g.save();
-          console.log('Removed from inProgress');
       } catch (error) {
           console.error('Error removing from inProgress:', error);
       }
@@ -181,34 +246,29 @@ export default function Reader() {
 
   const handleFinish = async () => {
       if (!group || !part) {
-          console.log('No group or part');
           return;
       }
       
       try {
-          console.log('Finishing part:', part, 'for group:', group.id);
-          
           const query = new Parse.Query('NewGroup');
           const g = await query.get(group.id);
           
-          let inProgress = g.get('inProgress') || [];
+          const partStr = part.toString();
+          const inProgressData = g.get('inProgressData') || {};
           let book = g.get('book') || [];
           let booksReaded = g.get('booksReaded') || 0;
           const max = g.get('max') || 0;
           
-          console.log('Before update - inProgress:', inProgress, 'book:', book, 'booksReaded:', booksReaded);
-          
-          // Remove from inProgress
-          inProgress = inProgress.filter(p => p !== part.toString());
+          // Remove from inProgressData
+          delete inProgressData[partStr];
           
           // Add to book (read)
-          if (!book.includes(part.toString())) {
-              book.push(part.toString());
+          if (!book.includes(partStr)) {
+              book.push(partStr);
           }
           
           // Check if this was the last part (book completed)
           if (book.length >= max) {
-              console.log('מזל טוב! הספר הושלם!');
               booksReaded += 1;
               book = []; // Reset book array for next cycle
               if (typeof window !== 'undefined') {
@@ -216,14 +276,11 @@ export default function Reader() {
               }
           }
           
-          console.log('After update - inProgress:', inProgress, 'book:', book, 'booksReaded:', booksReaded);
-          
-          g.set('inProgress', inProgress);
+          g.set('inProgressData', inProgressData);
+          g.set('inProgress', Object.keys(inProgressData)); // Update legacy array
           g.set('book', book);
           g.set('booksReaded', booksReaded);
           await g.save();
-          
-          console.log('Successfully saved!');
           
           if (typeof window !== 'undefined') {
             navigate('/feed');
@@ -234,6 +291,114 @@ export default function Reader() {
             alert('שגיאה בשׇירת התקדמות: ' + error.message);
           }
       }
+  };
+
+  const handleJoinGroup = async () => {
+    if (!currentUser) {
+      // Redirect to login
+      navigate('/login', { state: { from: `/group/${groupId}` } });
+      return;
+    }
+    
+    try {
+      const query = new Parse.Query('NewGroup');
+      const g = await query.get(groupId);
+      const members = g.get('members') || [];
+      const userEmail = currentUser.get('email');
+      
+      if (!members.includes(userEmail)) {
+        members.push(userEmail);
+        g.set('members', members);
+        await g.save();
+        
+        // Update local state
+        setGroup(prev => ({ ...prev, members }));
+      }
+      
+      setShowJoinPopup(false);
+    } catch (error) {
+      console.error('Error joining group:', error);
+      alert('שגיאה בהצטרפות לקבוצה');
+    }
+  };
+
+  const handleDeclineJoin = () => {
+    setShowJoinPopup(false);
+  };
+
+  const handleGetDifferentPart = async () => {
+    if (!group || !part) return;
+    
+    try {
+      setLoading(true);
+      
+      // Remove current part from inProgress
+      const query = new Parse.Query('NewGroup');
+      const g = await query.get(group.id);
+      
+      const partStr = part.toString();
+      const inProgressData = g.get('inProgressData') || {};
+      
+      // Remove current part from inProgressData
+      delete inProgressData[partStr];
+      
+      g.set('inProgressData', inProgressData);
+      g.set('inProgress', Object.keys(inProgressData));
+      await g.save();
+      
+      // Get a new random part
+      const cleanedInProgressData = await cleanupStaleInProgress(g);
+      
+      const updatedGroup = {
+        ...group,
+        inProgress: Object.keys(cleanedInProgressData)
+      };
+      
+      // Determine new Part - exclude both completed and in-progress parts
+      const exclude = [
+        ...updatedGroup.book.map(Number),
+        ...updatedGroup.inProgress.map(Number)
+      ];
+      
+      let newPart = getRandomWithExclusion(1, updatedGroup.max, exclude);
+      
+      if (!newPart) {
+        if (typeof window !== 'undefined') {
+          alert("אין עוד פרקים זמינים לקריאה!");
+          navigate('/feed');
+        }
+        return;
+      }
+      
+      // Add new part to inProgress
+      const newPartStr = newPart.toString();
+      const updatedInProgressData = g.get('inProgressData') || {};
+      updatedInProgressData[newPartStr] = Date.now();
+      
+      g.set('inProgressData', updatedInProgressData);
+      g.set('inProgress', Object.keys(updatedInProgressData));
+      await g.save();
+      
+      // Construct new URL
+      let contentUrl = '';
+      if (updatedGroup.bookType === '1' || updatedGroup.bookType === '3') {
+        contentUrl = `https://s3.amazonaws.com/DvarMalchus/tanya/socialTanya/${newPart}.pdf`;
+      } else if (updatedGroup.bookType === '2') {
+        const hebrewPart = getHebrewGematria(newPart);
+        contentUrl = `https://nerlazadik.co.il/תהילים/תהילים-פרק-${hebrewPart}/`;
+      }
+      
+      // Update state
+      setGroup({ ...updatedGroup, inProgress: Object.keys(updatedInProgressData) });
+      setPart(newPart);
+      setUrl(contentUrl);
+      
+    } catch (error) {
+      console.error('Error getting different part:', error);
+      alert('שגיאה בקבלת קטע אחר');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Show SSR data or loading state
@@ -291,13 +456,15 @@ export default function Reader() {
                  // sandbox="allow-scripts allow-same-origin"
                />
            ) : (
-               <object data={url} type="application/pdf" className="w-full h-full">
-                   <p>Browser does not support PDF. <a href={url}>Download</a></p>
-               </object>
+               <iframe 
+                 src={url} 
+                 title="PDF Viewer"
+                 className="w-full h-full border-0"
+               />
            )}
        </div>
 
-       {/* Finish Button - Floating */}
+       {/* Action Buttons - Floating */}
        <div className="absolute bottom-10 left-6">
            <button 
              onClick={handleFinish}
@@ -307,6 +474,49 @@ export default function Reader() {
               <span className="text-[10px] font-bold text-center leading-tight">סיימתי<br/>את הפרק</span>
            </button>
        </div>
+       
+       {/* Get Different Part Button - Floating Bottom Right */}
+       <div className="absolute bottom-10 right-6">
+           <button 
+             onClick={handleGetDifferentPart}
+             disabled={loading}
+             className="bg-[#FF9800] text-white w-16 h-16 rounded-lg shadow-lg flex flex-col items-center justify-center hover:bg-[#F57C00] disabled:opacity-50 disabled:cursor-not-allowed"
+           >
+              <FaRandom className="text-xl mb-1" />
+              <span className="text-[10px] font-bold text-center leading-tight">קבל<br/>קטע אחר</span>
+           </button>
+       </div>
+
+       {/* Join Group Popup */}
+       {showJoinPopup && (
+         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={handleDeclineJoin}>
+           <div className="bg-white rounded-lg p-6 mx-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+             <h2 className="text-xl font-bold text-[#003A92] mb-4 text-center">
+               רוצה להצטרף לקבוצה?
+             </h2>
+             <p className="text-gray-700 mb-6 text-center">
+               {currentUser 
+                 ? 'הצטרף לקבוצה כדי לראות אותה ברשימת הספרים שלך'
+                 : 'יש להתחבר כדי להצטרף לקבוצה. אפשר גם להמשיך לקרוא בלי להירשם.'
+               }
+             </p>
+             <div className="flex gap-3">
+               <button
+                 onClick={handleDeclineJoin}
+                 className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300"
+               >
+                 המשך בלי להצטרף
+               </button>
+               <button
+                 onClick={handleJoinGroup}
+                 className="flex-1 px-4 py-3 bg-[#003A92] text-white rounded-lg font-bold hover:bg-[#002a6b]"
+               >
+                 {currentUser ? 'הצטרף לקבוצה' : 'התחבר והצטרף'}
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
 
     </div>
   );
