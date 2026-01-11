@@ -483,59 +483,59 @@ class _ReaderViewWidgetState extends State<ReaderViewWidget> {
     } else if (number == 10) {
       return 'י';
     } else if (number < 20) {
-      return 'י' + units[number - 11];
+      return 'י${units[number - 11]}';
     } else if (number == 20) {
       return 'כ';
     } else if (number < 30) {
-      return 'כ' + units[number - 21];
+      return 'כ${units[number - 21]}';
     } else if (number == 30) {
       return 'ל';
     } else if (number < 40) {
-      return 'ל' + units[number - 31];
+      return 'ל${units[number - 31]}';
     } else if (number == 40) {
       return 'מ';
     } else if (number < 50) {
-      return 'מ' + units[number - 41];
+      return 'מ${units[number - 41]}';
     } else if (number == 50) {
       return 'נ';
     } else if (number < 60) {
-      return 'נ' + units[number - 51];
+      return 'נ${units[number - 51]}';
     } else if (number == 60) {
       return 'ס';
     } else if (number < 70) {
-      return 'ס' + units[number - 61];
+      return 'ס${units[number - 61]}';
     } else if (number == 70) {
       return 'ע';
     } else if (number < 80) {
-      return 'ע' + units[number - 71];
+      return 'ע${units[number - 71]}';
     } else if (number == 80) {
       return 'פ';
     } else if (number < 90) {
-      return 'פ' + units[number - 81];
+      return 'פ${units[number - 81]}';
     } else if (number == 90) {
       return 'צ';
     } else if (number < 100) {
-      return 'צ' + units[number - 91];
+      return 'צ${units[number - 91]}';
     } else if (number == 100) {
       return 'ק';
     } else if (number < 110) {
-      return 'ק' + units[number - 101];
+      return 'ק${units[number - 101]}';
     } else if (number == 110) {
       return 'קי';
     } else if (number < 120) {
-      return 'קי' + units[number - 111];
+      return 'קי${units[number - 111]}';
     } else if (number == 120) {
       return 'קכ';
     } else if (number < 130) {
-      return 'קכ' + units[number - 121];
+      return 'קכ${units[number - 121]}';
     } else if (number == 130) {
       return 'קל';
     } else if (number < 140) {
-      return 'קל' + units[number - 131];
+      return 'קל${units[number - 131]}';
     } else if (number == 140) {
       return 'קמ';
     } else if (number < 150) {
-      return 'קמ' + units[number - 141];
+      return 'קמ${units[number - 141]}';
     }
 
     return number.toString(); // Fallback for numbers > 150
@@ -563,7 +563,7 @@ class _ReaderViewWidgetState extends State<ReaderViewWidget> {
               await controller.runJavaScript('''
                 // Immediately inject CSS to hide everything and style content
                 const style = document.createElement('style');
-                style.textContent = \`
+                style.textContent = `
                   body > *:not(.psalm-content) { display: none !important; }
                   body { background-color: #E9F4FF !important; }
                   
@@ -589,7 +589,7 @@ class _ReaderViewWidgetState extends State<ReaderViewWidget> {
                     margin-bottom: 20px !important;
                     color: #04478E !important;
                   }
-                \`;
+                `;
                 document.head.appendChild(style);
                 
                 // Create and populate container
@@ -603,7 +603,7 @@ class _ReaderViewWidgetState extends State<ReaderViewWidget> {
                 // Create title element
                 const titleElement = document.createElement('h2');
                 titleElement.className = 'psalm-title';
-                titleElement.textContent = \`פרק \${chapterNumber}\`;
+                titleElement.textContent = `פרק \${chapterNumber}`;
                 container.appendChild(titleElement);
                 
                 // Create wrapper div
@@ -628,7 +628,7 @@ class _ReaderViewWidgetState extends State<ReaderViewWidget> {
                 container.appendChild(wrapperDiv);
                 
                 // Set the page title
-                document.title = \`תהילים - פרק \${chapterNumber}\`;
+                document.title = `תהילים - פרק \${chapterNumber}`;
                 
                 // Clear the body and add our container
                 document.body.innerHTML = '';

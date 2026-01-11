@@ -1,0 +1,23 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Project Structure Guide
+
+This project is a Flutter application with the following main structure:
+
+- The main entry point is [main.dart](mdc:lib/main.dart).
+- Core utilities, constants, and dependency injection are in the [core](mdc:lib/core) directory:
+  - Dependency injection and service location: [ioc.dart](mdc:lib/core/ioc.dart)
+  - Screen size configuration: [size_config.dart](mdc:lib/core/size_config.dart)
+  - App-wide constants and asset references: [consts/assets.dart](mdc:lib/core/consts/assets.dart)
+- The [feed](mdc:lib/feed) directory contains logic for the main reading/book group features:
+  - State management (Cubit): [cubit/feed_cubit.dart](mdc:lib/feed/cubit/feed_cubit.dart), [cubit/feed_state.dart](mdc:lib/feed/cubit/feed_state.dart)
+  - Data models: [group.dart](mdc:lib/feed/group.dart)
+  - UI/Presentation: [presentation/feed.dart](mdc:lib/feed/presentation/feed.dart), [presentation/reader_view.dart](mdc:lib/feed/presentation/reader_view.dart)
+- The [auth](mdc:lib/auth) directory contains authentication logic:
+  - State management (Cubit): [presentation/cubit/auth_cubit.dart](mdc:lib/auth/presentation/cubit/auth_cubit.dart), [presentation/cubit/auth_state.dart](mdc:lib/auth/presentation/cubit/auth_state.dart)
+  - UI/Presentation: [presentation/login_page.dart](mdc:lib/auth/presentation/login_page.dart), [presentation/login_page_desktop.dart](mdc:lib/auth/presentation/login_page_desktop.dart)
+
+Refer to these files and directories for the main features and navigation of the codebase.
