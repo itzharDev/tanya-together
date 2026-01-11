@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  tanya-together:
+    deploy:
+      replicas: 1
+    container_name: tanya-together
+    restart: always
+    image: itzhardev/tanya-together:latest
+    environment:
+      - NODE_ENV=prod
+      - PORT=80
+      - PARSE_SERVER_URL=http://tanya:3001/parse
+      - VIRTUAL_HOST=tanya-together.dvarmalchus.co.il
+      - VIRTUAL_PORT=80
+      - LETSENCRYPT_HOST=tanya-together.dvarmalchus.co.il
+      - LETSENCRYPT_EMAIL=itzhar.dev@gmail.com
+    networks:
+      - nginx
+
+networks:
+  nginx:
+    external: true

@@ -110,54 +110,51 @@ export const AuthProvider = ({ children }) => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
-      // Sync with Parse
-      // Logic from AuthCubit: ParseUser.loginWith('google', ...)
-      // We need to link or create user. 
-      // Simplified: Check if user exists by ID or Create.
-      // Actually AuthCubit uses `ParseUser.loginWith('google', ...)` which handles linkage.
-      // In JS SDK: `Parse.User.logInWith('google', { authData: { id: ..., id_token: ..., access_token: ... } })`
-      
-      // Construct authData for Parse
-      // Note: Parse JS SDK might need different format or provider setup.
-      // For simplicity/robustness, we might custom handle this:
-      // 1. Get Google ID/Email.
-      // 2. Find/Create Parse User.
-      
-      // AuthCubit logic:
-      // Set fields: displayName, email, id, photoUrl
-      
-       const authData = {
-        id: user.providerData[0].uid,
-        id_token: await user.getIdToken(),
-        access_token: result._tokenResponse?.oauthAccessToken // This might differ in JS SDK
-      };
-      
-      // Using a custom cloud function or just creating user via client if allowed?
-      // AuthCubit uses `ParseUser.loginWith`. 
-      // Let's try standard Parse Link if possible, or fallback to manual update.
-      
-      // Manual fallback for now to ensure progress:
-      // Create user with Google email as username
-      
       const email = user.email;
-      const cleanEmail = email.replace(/[^\w\s]/gi, ''); // sanitization if needed
-      const password = user.uid; // Use UID as password for syncing
+      const password = user.uid; // Use Firebase UID as password
+      
+      console.log('Attempting Google login for:', email);
       
       let parseUser;
+      
+      // Try to signup first
       try {
+        parseUser = new Parse.User();
+        parseUser.set("username", email);
+        parseUser.set("password", password);
+        parseUser.set("email", email);
+        parseUser.set('displayName', user.displayName);
+        parseUser.set('photoUrl', user.photoURL);
+        parseUser.set('googleId', user.uid);
+        
+        await parseUser.signUp();
+        console.log('New user created successfully');
+      } catch (signupError) {
+        // Signup failed - user probably already exists, try to login
+        console.log('Signup failed, attempting login...', signupError.message);
+        
+        try {
           parseUser = await Parse.User.logIn(email, password);
-      } catch(e) {
-          parseUser = new Parse.User();
-          parseUser.set("username", email);
-          parseUser.set("password", password);
-          parseUser.set("email", email);
-          await parseUser.signUp();
+          console.log('Login successful');
+        } catch (loginError) {
+          console.error('Login also failed:', loginError);
+          
+          // If the user exists but password is wrong, they likely signed up via Flutter app
+          // with Google OAuth which uses a different authentication method
+          alert('המשתמש קיים במערכת.\n\nלא ניתן להתחבר באמצעות Google כרגע בגרסת הווב.\nאנא השתמש בהתחברות בטלפון או באפליקציה הניידת.');
+          throw new Error('User exists - use phone login or mobile app');
+        }
       }
       
-      parseUser.set('displayName', user.displayName);
-      parseUser.set('photoUrl', user.photoURL);
-      parseUser.set('googleId', user.uid);
-      await parseUser.save();
+      // Get current user and update profile
+      parseUser = await Parse.User.current();
+      if (parseUser) {
+        parseUser.set('displayName', user.displayName);
+        parseUser.set('email', user.email);
+        parseUser.set('photoUrl', user.photoURL);
+        parseUser.set('googleId', user.uid);
+        await parseUser.save();
+      }
       
       setCurrentUser(parseUser);
       return parseUser;

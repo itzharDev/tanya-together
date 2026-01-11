@@ -5,21 +5,28 @@ import Login from './pages/Login';
 import Feed from './pages/Feed';
 import Reader from './pages/Reader';
 
+function AppContent() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/feed" element={
+        <SocketProvider>
+          <Feed />
+        </SocketProvider>
+      } />
+      <Route path="/group/:groupId" element={<Reader />} />
+      <Route path="/" element={<Navigate to="/feed" replace />} />
+      <Route path="*" element={<Navigate to="/feed" replace />} />
+    </Routes>
+  );
+}
+
 function App() {
+  // Use BrowserRouter on client, StaticRouter is used in entry-server.jsx
   return (
     <AuthProvider>
       <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/feed" element={
-            <SocketProvider>
-              <Feed />
-            </SocketProvider>
-          } />
-          <Route path="/reader/:groupId" element={<Reader />} />
-          <Route path="/" element={<Navigate to="/feed" replace />} />
-          <Route path="*" element={<Navigate to="/feed" replace />} />
-        </Routes>
+        <AppContent />
       </Router>
     </AuthProvider>
   );

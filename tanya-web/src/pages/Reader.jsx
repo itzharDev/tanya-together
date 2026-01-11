@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSSR } from '../context/SSRContext';
 import Parse from '../services/parse';
 import { getHebrewGematria } from '../utils/hebrew';
 import { FaArrowLeft, FaEllipsisV, FaCheck } from 'react-icons/fa';
@@ -10,6 +11,7 @@ export default function Reader() {
   const { groupId } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const ssrData = useSSR();
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [part, setPart] = useState(null);
@@ -21,8 +23,35 @@ export default function Reader() {
     }
   }, [groupId]);
 
-  // Update meta tags for social sharing
+  // Cleanup: remove part from inProgress when component unmounts (client-side only)
   useEffect(() => {
+    if (typeof window === 'undefined') return; // Skip on server
+    
+    return () => {
+      if (group && part) {
+        // Async cleanup - remove from inProgress if user leaves without finishing
+        const cleanup = async () => {
+          try {
+            console.log('Component unmounting - removing part from inProgress:', part);
+            const query = new Parse.Query('NewGroup');
+            const g = await query.get(group.id);
+            let inProgress = g.get('inProgress') || [];
+            inProgress = inProgress.filter(p => p !== part.toString());
+            g.set('inProgress', inProgress);
+            await g.save();
+          } catch (error) {
+            console.error('Cleanup error:', error);
+          }
+        };
+        cleanup();
+      }
+    };
+  }, [group, part]);
+
+  // Update meta tags for social sharing (client-side only)
+  useEffect(() => {
+    if (typeof document === 'undefined') return; // Skip on server
+    
     if (group) {
       document.title = `ספר ${group.name} - תניא המחולק`;
       
@@ -73,6 +102,7 @@ export default function Reader() {
             bookType: g.get('bookType') || '1',
             name: g.get('name'),
             bookImage: g.get('bookImage') || null,
+            booksReaded: g.get('booksReaded') || 0,
         };
         
         // Determine Part - exclude both completed and in-progress parts
@@ -84,18 +114,21 @@ export default function Reader() {
         let selectedPart = getRandomWithExclusion(1, localGroup.max, exclude);
         
         if (!selectedPart) {
-            alert("אין עוד פרקים זמינים לקריאה!");
-            navigate('/feed');
+            if (typeof window !== 'undefined') {
+              alert("אין עוד פרקים זמינים לקריאה!");
+              navigate('/feed');
+            }
             return;
         }
 
         console.log('Selected Part:', selectedPart);
 
-        // Update Server: Add to inProgress (only if user is authenticated)
-        if (currentUser && !localGroup.inProgress.includes(selectedPart.toString())) {
+        // Update Server: Add to inProgress (for all users - authenticated and anonymous)
+        if (!localGroup.inProgress.includes(selectedPart.toString())) {
              localGroup.inProgress.push(selectedPart.toString());
              g.set('inProgress', localGroup.inProgress);
              await g.save();
+             console.log('Added part to inProgress:', selectedPart);
         }
 
         // Construct URL
@@ -112,24 +145,43 @@ export default function Reader() {
         setUrl(contentUrl);
 
     } catch (error) {
-        console.error("Error loading reader:", error);
-        alert("שגיאה בטעינת התוכן");
-        navigate('/feed');
+        console.error("Error loading group:", error);
+        if (typeof window !== 'undefined') {
+          alert("שגיאה בטעינת התוכן");
+          navigate('/feed');
+        }
     } finally {
         setLoading(false);
     }
   };
 
+  const handleBackWithoutFinish = async () => {
+      if (!group || !part) return;
+      
+      try {
+          console.log('Removing part from inProgress (user left without finishing):', part);
+          const query = new Parse.Query('NewGroup');
+          const g = await query.get(group.id);
+          
+          let inProgress = g.get('inProgress') || [];
+          inProgress = inProgress.filter(p => p !== part.toString());
+          
+          g.set('inProgress', inProgress);
+          await g.save();
+          console.log('Removed from inProgress');
+      } catch (error) {
+          console.error('Error removing from inProgress:', error);
+      }
+  };
+
+  const handleBack = async () => {
+      await handleBackWithoutFinish();
+      navigate('/feed');
+  };
+
   const handleFinish = async () => {
       if (!group || !part) {
           console.log('No group or part');
-          return;
-      }
-      
-      // If not authenticated, just navigate back (anonymous users can't save progress)
-      if (!currentUser) {
-          alert('יש להתחבר כדי לשמור התקדמות');
-          navigate('/feed');
           return;
       }
       
@@ -141,8 +193,10 @@ export default function Reader() {
           
           let inProgress = g.get('inProgress') || [];
           let book = g.get('book') || [];
+          let booksReaded = g.get('booksReaded') || 0;
+          const max = g.get('max') || 0;
           
-          console.log('Before update - inProgress:', inProgress, 'book:', book);
+          console.log('Before update - inProgress:', inProgress, 'book:', book, 'booksReaded:', booksReaded);
           
           // Remove from inProgress
           inProgress = inProgress.filter(p => p !== part.toString());
@@ -152,29 +206,59 @@ export default function Reader() {
               book.push(part.toString());
           }
           
-          console.log('After update - inProgress:', inProgress, 'book:', book);
+          // Check if this was the last part (book completed)
+          if (book.length >= max) {
+              console.log('מזל טוב! הספר הושלם!');
+              booksReaded += 1;
+              book = []; // Reset book array for next cycle
+              if (typeof window !== 'undefined') {
+                alert(`מזל טוב! השלמתם את הספר! ספרים שהושלמו: ${booksReaded}`);
+              }
+          }
+          
+          console.log('After update - inProgress:', inProgress, 'book:', book, 'booksReaded:', booksReaded);
           
           g.set('inProgress', inProgress);
           g.set('book', book);
+          g.set('booksReaded', booksReaded);
           await g.save();
           
           console.log('Successfully saved!');
           
-          navigate('/feed');
+          if (typeof window !== 'undefined') {
+            navigate('/feed');
+          }
       } catch (error) {
           console.error("Error finishing part:", error);
-          alert('שגיאה בשמירת התקדמות: ' + error.message);
+          if (typeof window !== 'undefined') {
+            alert('שגיאה בשׇירת התקדמות: ' + error.message);
+          }
       }
   };
 
-  if (loading) return <div className="text-center mt-20">טוען...</div>;
+  // Show SSR data or loading state
+  if (loading && !ssrData) {
+    return <div className="text-center mt-20">טוען...</div>;
+  }
+
+  // Use SSR data if client data hasn't loaded yet
+  const displayGroup = group || (ssrData ? { name: ssrData.name, bookImage: ssrData.bookImage } : null);
+
+  if (!displayGroup) {
+    return <div className="text-center mt-20">טוען...</div>;
+  }
 
   return (
     <div className="flex flex-col h-screen bg-[#E9F4FF]">
        {/* Header */}
        <div className="bg-[#003A92] p-4 text-white flex items-center justify-between">
-            <button onClick={() => navigate('/feed')}><FaArrowLeft /></button>
-            <div className="font-bold text-lg">ספר {group?.name}</div>
+            <button onClick={handleBack}><FaArrowLeft /></button>
+            <div className="flex flex-col items-center">
+              <div className="font-bold text-lg">ספר {displayGroup.name}</div>
+              {group?.booksReaded > 0 && (
+                <div className="text-xs text-[#E9F4FF]/80">ספרים שהושלמו: {group.booksReaded}</div>
+              )}
+            </div>
             <button><FaEllipsisV /></button>
        </div>
 

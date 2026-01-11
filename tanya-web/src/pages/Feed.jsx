@@ -110,6 +110,7 @@ export default function Feed() {
       newGroup.set('book', []);
       newGroup.set('inProgress', []);
       newGroup.set('members', []);
+      newGroup.set('booksReaded', 0);
       
       // Set max based on book type
       const maxParts = groupData.bookType === '3' ? 525 : groupData.bookType === '2' ? 150 : 385;
@@ -208,7 +209,7 @@ export default function Feed() {
               
               {/* Tabs - Only show for authenticated users */}
               {currentUser && (
-              <div className="flex space-x-2 mb-2 px-1 dir-rtl flex-row-reverse" style={{direction: 'rtl'}}> 
+              <div className="flex gap-2 mb-2 px-1 dir-rtl flex-row-reverse" style={{direction: 'rtl'}}> 
                  <TabButton 
                     label="ספרים כלליים" 
                     count={counts.global} 

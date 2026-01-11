@@ -1,16 +1,72 @@
-# React + Vite
+# Tanya Web - תניא המחולק
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React web application for collaborative Torah study, converted from the Flutter mobile app.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 📖 **Collaborative Reading**: Join reading groups and complete books together
+- 👤 **Anonymous Access**: Read and contribute without logging in
+- 🎯 **Smart Part Selection**: Automatically get random unread parts
+- 🔄 **Real-time Updates**: Socket.io for live progress tracking
+- 🌐 **Social Sharing**: Open Graph meta tags for sharing on social media
+- 🇮🇱 **Hebrew RTL Support**: Fully localized with right-to-left layout
+- 📱 **Responsive Design**: Works on mobile and desktop
 
-## React Compiler
+## Quick Start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# Install dependencies
+npm install
 
-## Expanding the ESLint configuration
+# Start development server
+npm run dev
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## Authentication
+
+**Anonymous users can:**
+- Browse all public groups
+- Read any book part
+- Mark parts as finished
+
+**Login required only for:**
+- Creating new reading groups
+
+See [AUTH_REQUIREMENTS.md](./AUTH_REQUIREMENTS.md) for detailed information.
+
+## Tech Stack
+
+- **Framework**: React 19 + Vite 7
+- **Styling**: Tailwind CSS 4
+- **Routing**: React Router v7
+- **Backend**: Parse Server + Firebase
+- **Real-time**: Socket.io
+- **State Management**: React Context API
+
+## Project Structure
+
+```
+src/
+├── pages/          # Route components (Login, Feed, Reader/Group)
+├── components/     # Reusable components (GroupCard, CreateGroupModal)
+├── context/        # React Context providers (Auth, Socket)
+├── services/       # API services (Parse, Firebase)
+├── utils/          # Utility functions (Hebrew text helpers)
+└── assets/         # Images and icons
+```
+
+## Environment Variables
+
+Configure Firebase and Parse Server in:
+- `src/services/firebase.js`
+- `src/services/parse.js`
+
+## License
+
+Private - All rights reserved

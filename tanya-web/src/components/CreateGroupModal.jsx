@@ -116,15 +116,15 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit }) {
 
         {/* Form Content */}
         <div className="bg-[#E9F4FF] p-6 space-y-4">
-          {/* Book Type Selection */}
-          <div>
-            <label className="block text-sm font-bold mb-2 text-right">
+          {/* Book Type Selection - Hidden, defaulting to Tanya only */}
+          {/* <div>
+            <label className="block text-sm font-bold mb-2 text-right text-gray-800">
               איזה ספר תרצו לחלק?
             </label>
             <select
               value={bookType}
               onChange={(e) => setBookType(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded bg-[#E9F4FF] text-right font-bold focus:outline-none focus:border-blue-500"
+              className="w-full p-3 border border-gray-300 rounded bg-[#E9F4FF] text-right font-bold text-gray-800 focus:outline-none focus:border-blue-500"
             >
               {booksType.map((book) => (
                 <option key={book.type} value={book.type}>
@@ -132,7 +132,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit }) {
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
 
           {/* Group Name */}
           <div>
@@ -141,7 +141,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit }) {
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
               placeholder="שם הספר / קבוצת קריאה"
-              className={`w-full p-3 border rounded text-right bg-white focus:outline-none ${
+              className={`w-full p-3 border rounded text-right bg-white text-gray-800 placeholder-gray-500 focus:outline-none ${
                 errors.name ? 'border-red-500' : 'border-gray-300 focus:border-blue-500'
               }`}
             />
@@ -154,7 +154,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit }) {
               value={groupDescription}
               onChange={(e) => setGroupDescription(e.target.value)}
               placeholder="תיאור קצר על הקבוצה"
-              className={`w-full p-3 border rounded text-right bg-white focus:outline-none ${
+              className={`w-full p-3 border rounded text-right bg-white text-gray-800 placeholder-gray-500 focus:outline-none ${
                 errors.description ? 'border-red-500' : 'border-gray-300 focus:border-blue-500'
               }`}
             />
@@ -168,7 +168,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit }) {
               value={groupDedication}
               onChange={(e) => setGroupDedication(e.target.value)}
               placeholder="הספר מוקדש ל"
-              className={`flex-grow p-3 border rounded text-right bg-white focus:outline-none ${
+              className={`flex-grow p-3 border rounded text-right bg-white text-gray-800 placeholder-gray-500 focus:outline-none ${
                 errors.dedication ? 'border-red-500' : 'border-gray-300 focus:border-blue-500'
               }`}
             />
@@ -177,7 +177,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit }) {
             <select
               value={groupIntention}
               onChange={(e) => setGroupIntention(e.target.value)}
-              className="w-32 p-3 border border-gray-300 rounded bg-[#E9F4FF] text-right font-bold focus:outline-none focus:border-blue-500"
+              className="w-32 p-3 border border-gray-300 rounded bg-[#E9F4FF] text-right font-bold text-gray-800 focus:outline-none focus:border-blue-500"
             >
               {intentions.map((intent) => (
                 <option key={intent.type} value={intent.type}>
@@ -194,7 +194,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit }) {
               value={bookImage}
               onChange={(e) => setBookImage(e.target.value)}
               placeholder="קישור לתמונת הספר (אופציונלי)"
-              className="w-full p-3 border border-gray-300 rounded text-right bg-white focus:outline-none focus:border-blue-500"
+              className="w-full p-3 border border-gray-300 rounded text-right bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-500"
             />
           </div>
         </div>
