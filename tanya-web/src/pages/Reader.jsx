@@ -121,20 +121,28 @@ export default function Reader() {
   };
 
   const handleFinish = async () => {
-      if (!group || !part) return;
+      if (!group || !part) {
+          console.log('No group or part');
+          return;
+      }
       
       // If not authenticated, just navigate back (anonymous users can't save progress)
       if (!currentUser) {
+          alert('יש להתחבר כדי לשמור התקדמות');
           navigate('/feed');
           return;
       }
       
       try {
+          console.log('Finishing part:', part, 'for group:', group.id);
+          
           const query = new Parse.Query('NewGroup');
           const g = await query.get(group.id);
           
           let inProgress = g.get('inProgress') || [];
           let book = g.get('book') || [];
+          
+          console.log('Before update - inProgress:', inProgress, 'book:', book);
           
           // Remove from inProgress
           inProgress = inProgress.filter(p => p !== part.toString());
@@ -144,13 +152,18 @@ export default function Reader() {
               book.push(part.toString());
           }
           
+          console.log('After update - inProgress:', inProgress, 'book:', book);
+          
           g.set('inProgress', inProgress);
           g.set('book', book);
           await g.save();
           
+          console.log('Successfully saved!');
+          
           navigate('/feed');
       } catch (error) {
           console.error("Error finishing part:", error);
+          alert('שגיאה בשמירת התקדמות: ' + error.message);
       }
   };
 
