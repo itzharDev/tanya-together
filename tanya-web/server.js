@@ -57,14 +57,14 @@ async function createServer() {
       let title, description, image, pageUrl
       
       if (initialData && initialData.name) {
-        title = `ספר ${initialData.name} - תניא המחולק`
+        title = `ספר ${initialData.name} - תניא מחולק`
         description = initialData.description || `קרא את ספר ${initialData.name} - תניא המחולק`
-        image = initialData.bookImage || 'https://tanya.dvarmalchus.co.il/tanya-logo.png'
+        image = initialData.bookImage || 'https://tanya-together.dvarmalchus.co.il/tanya-logo-preview.png'
         pageUrl = `https://tanya.dvarmalchus.co.il${url}`
       } else {
         // Default meta tags for non-group pages
-        title = 'תניא המחולק - לימוד תניא ביחד בקבוצות'
-        description = 'תניא המחולק - פלטפורמה ללימוד תניא משותף בקבוצות. השלימו את התניא ביחד עם חברים ומשפחה.'
+        title = 'תניא מחולק - לימוד תניא ביחד בקבוצות'
+        description = 'תניא מחולק - פלטפורמה ללימוד תניא משותף בקבוצות. השלימו את התניא ביחד עם חברים ומשפחה.'
         image = 'https://tanya.dvarmalchus.co.il/tanya-logo.png'
         pageUrl = 'https://tanya.dvarmalchus.co.il'
       }
@@ -82,7 +82,7 @@ async function createServer() {
     <meta property="og:description" content="${escapeHtml(description)}" />
     <meta property="og:image" content="${escapeHtml(image)}" />
     <meta property="og:locale" content="he_IL" />
-    <meta property="og:site_name" content="תניא המחולק" />
+    <meta property="og:site_name" content="תניא מחולק" />
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />

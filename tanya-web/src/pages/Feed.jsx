@@ -175,6 +175,7 @@ export default function Feed() {
         group.set('description', groupData.groupDescription);
         group.set('name', groupData.groupName);
         group.set('intention', groupData.groupIntention);
+        group.set('dedicatedTo', groupData.groupDedication);
         
         // Update book image if provided
         if (groupData.bookImage && groupData.bookImage.trim() !== '') {
@@ -203,6 +204,7 @@ export default function Feed() {
         newGroup.set('name', groupData.groupName);
         newGroup.set('bookType', groupData.bookType);
         newGroup.set('intention', groupData.groupIntention);
+        newGroup.set('dedicatedTo', groupData.groupDedication);
         newGroup.set('book', []);
         newGroup.set('inProgress', []);
         newGroup.set('inProgressData', {}); // New field to track timestamps
@@ -335,10 +337,12 @@ export default function Feed() {
                   )}
               </div>
           ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl mx-auto w-full">
-                  {displayedGroups.map((g, idx) => (
-                      <GroupCard key={g.id} group={g} index={idx} onEdit={handleEditGroup} currentUser={currentUser} />
-                  ))}
+              <div className="max-w-7xl mx-auto w-full">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {displayedGroups.map((g, idx) => (
+                          <GroupCard key={g.id} group={g} index={idx} onEdit={handleEditGroup} currentUser={currentUser} />
+                      ))}
+                  </div>
               </div>
           )}
       </div>

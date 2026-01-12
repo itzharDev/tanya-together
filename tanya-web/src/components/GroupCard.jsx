@@ -2,9 +2,8 @@ import React from 'react';
 import { FaShareAlt, FaUser, FaEdit } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import bookIcon from '../assets/icons/book.svg'; 
-import sunIcon from '../assets/icons/sun.png';
 import tanyaIcon from '../assets/icons/tanya_icon.svg';
-import { getIntentionIcon } from '../constants/groupTypes';
+import { getIntentionIcon, getIntentionPrefix } from '../constants/groupTypes';
 
 // Helper to get Book Type Name
 const getBookTypeName = (type) => {
@@ -27,6 +26,7 @@ export default function GroupCard({ group, index, onEdit, currentUser }) {
     inProgress = [],
     booksReaded = 0,
     description = '',
+    dedicatedTo = '',
     intention = '1'
   } = group;
 
@@ -71,13 +71,11 @@ export default function GroupCard({ group, index, onEdit, currentUser }) {
     <div className="bg-white rounded-lg shadow-sm border-2 border-transparent hover:border-blue-100 transition-colors h-full">
       <div className="bg-white rounded-lg p-4 flex flex-col items-stretch space-y-3">
         
-        {/* Header: Icon | Title | Share */}
+        {/* Header: Title | Share */}
         <div className="flex items-center justify-between text-[#04478E]">
-           <img src={bookIcon} alt="Book" className="w-5 h-5 text-[#04478E]" />
-
           <div className="flex-grow text-right px-4">
             <div className="font-bold text-lg line-clamp-2">
-              ספר {bookTypeName} {index + 1}: {name}
+              ספר {bookTypeName}: {name}
             </div>
              {booksReaded > 0 && (
                <div className="text-xs text-gray-500">ספרים שהושלמו: {booksReaded}</div>
@@ -126,25 +124,43 @@ export default function GroupCard({ group, index, onEdit, currentUser }) {
                     ) : (
                       <span className="text-white text-[10px] font-bold">{emailInitials}</span>
                     )}
-                    {/* Online indicator dot - mock */}
-                    <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white bg-green-400 transform translate-x-1/3 -translate-y-1/3"></span>
+                    {/* Online indicator dot - hidden for now */}
+                    {/* <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white bg-green-400 transform translate-x-1/3 -translate-y-1/3"></span> */}
                  </div>
                );
              })}
         </div>
 
         {/* Progress Bar Row */}
-        <div className="flex items-center justify-between mt-2">
-            <span className="text-sm text-gray-500 w-16 text-center">{book.length}/{max}</span>
-            
-            <div className="flex-grow mx-4 h-2 bg-[#E9F4FF] rounded-full overflow-hidden relative">
-                 <div 
-                    className="h-full bg-[#04478E] rounded-full"
-                    style={{ width: `${progress}%` }}
-                 ></div>
+        <div className="mt-2">
+            <div className="flex items-center gap-4">
+                {/* Progress bar container with labels */}
+                <div className="flex-grow">
+                    {/* Progress bar with book icon */}
+                    <div className="h-2 bg-[#E9F4FF] rounded-full overflow-visible relative mb-1">
+                      <div 
+                         className="h-full bg-[#04478E] rounded-full"
+                         style={{ width: `${progress}%` }}
+                      ></div>
+                      {/* Book icon positioned above progress bar */}
+                      <img 
+                        src={bookIcon} 
+                        alt="Progress" 
+                        className="w-5 h-5 absolute z-10"
+                        style={{ right: `${Math.min(progress, 100)}%`, transform: 'translateX(50%)', bottom: '100%', marginBottom: '2px' }}
+                      />
+                    </div>
+                    
+                    {/* Labels row below progress bar */}
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-500">{book.length}/{max}</span>
+                        <span className="text-sm text-gray-500">סיום הספר</span>
+                    </div>
+                </div>
+                
+                {/* Sun icon on the left */}
+                <img src="/sun.png" alt="Sun" className="w-8 h-8 opacity-80 flex-shrink-0" />
             </div>
-
-            <img src={sunIcon} alt="Sun" className="w-8 h-8 opacity-80" />
         </div>
 
         {/* Action Button & Status */}
@@ -153,11 +169,11 @@ export default function GroupCard({ group, index, onEdit, currentUser }) {
                 <div className="text-sm text-gray-600 mb-1">
                   {inProgress.length > 0 ? `${inProgress.length} פרטים בקריאה כעת` : ''}
                 </div>
-                {description && (
+                {dedicatedTo && (
                   <div className="flex items-center gap-2">
                     <img src={getIntentionIcon(intention)} alt="intention" className="w-6 h-6 flex-shrink-0" />
                     <div className="text-xs text-gray-500 line-clamp-2 flex-1 text-right">
-                      {description}
+                      {getIntentionPrefix(intention)} {dedicatedTo}
                     </div>
                   </div>
                 )}

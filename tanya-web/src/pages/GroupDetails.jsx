@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import Parse from '../services/parse';
 import { FaArrowRight, FaUser, FaEllipsisV } from 'react-icons/fa';
 import bookIcon from '../assets/icons/book.svg';
-import { getIntentionIcon, getIntentionText } from '../constants/groupTypes';
+import { getIntentionIcon, getIntentionPrefix } from '../constants/groupTypes';
 
 // Helper to get Book Type Name
 const getBookTypeName = (type) => {
@@ -94,7 +94,8 @@ export default function GroupDetails() {
     global = false,
     ownerName = '',
     ownerEmail = '',
-    intention = ''
+    intention = '',
+    dedicatedTo = ''
   } = group;
 
   const bookTypeName = getBookTypeName(bookType);
@@ -130,11 +131,10 @@ export default function GroupDetails() {
               {description && (
                 <p className="text-gray-600 mb-2">{description}</p>
               )}
-              {intention && (
+              {dedicatedTo && (
                 <div className="flex items-center gap-2 mb-2" style={{ direction: 'rtl' }}>
                   <img src={getIntentionIcon(intention)} alt="intention" className="w-5 h-5" />
-                  <span className="text-sm text-gray-500 font-bold">סוג קבוצה:</span>
-                  <span className="text-sm text-gray-500">{getIntentionText(intention)}</span>
+                  <span className="text-sm text-gray-500">{getIntentionPrefix(intention)} {dedicatedTo}</span>
                 </div>
               )}
               <p className="text-sm text-gray-500">

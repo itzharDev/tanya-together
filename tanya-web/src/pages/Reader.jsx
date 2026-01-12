@@ -73,12 +73,8 @@ export default function Reader() {
       const members = group.members || [];
       const userEmail = currentUser?.get('email');
       
-      // If user is logged in and not a member, show popup
+      // Only show popup if user is logged in and not a member
       if (currentUser && userEmail && !members.some(m => m.email === userEmail)) {
-        setShowJoinPopup(true);
-      }
-      // If user is not logged in, show popup to ask if they want to join
-      else if (!currentUser) {
         setShowJoinPopup(true);
       }
       
@@ -514,7 +510,8 @@ export default function Reader() {
                // PDF Viewer using react-pdf (client-side only)
                <div className="w-full flex flex-col items-center py-4">
                  {!isClient || !PDFComponents ? (
-                   <div className="flex items-center justify-center h-64">
+                   <div className="flex flex-col items-center justify-center h-64 gap-4">
+                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#027EC5]"></div>
                      <div className="text-gray-500">טוען...</div>
                    </div>
                  ) : (() => {
@@ -523,12 +520,13 @@ export default function Reader() {
                      <>
                        <Document
                          file={url}
-                         onLoadSuccess={onDocumentLoadSuccess}
-                         loading={
-                           <div className="flex items-center justify-center h-64">
-                             <div className="text-gray-500">טוען PDF...</div>
-                           </div>
-                         }
+                     onLoadSuccess={onDocumentLoadSuccess}
+                     loading={
+                       <div className="flex flex-col items-center justify-center h-64 gap-4">
+                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#027EC5]"></div>
+                         <div className="text-gray-500">טוען PDF...</div>
+                       </div>
+                     }
                          error={
                            <div className="flex items-center justify-center h-64 text-red-500">
                              שגיאה בטעינת PDF

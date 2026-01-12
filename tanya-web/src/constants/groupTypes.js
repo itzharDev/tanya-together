@@ -28,3 +28,16 @@ export const getIntentionText = (type) => {
   const intention = intentions.find(i => i.type === type);
   return intention ? intention.text : 'אחר';
 };
+
+// Helper function to get intention prefix for dedication text
+export const getIntentionPrefix = (type) => {
+  switch (type) {
+    case '1': return 'הלימוד לזכות'; // זכות
+    case '2': return 'הלימוד לע״נ'; // ע״נ
+    case '3': return 'הלימוד להצלחת'; // הצלחה
+    case '4': return 'הלימוד זחו״ק'; // זחו״ק
+    case '5': return 'הלימוד לרפואת'; // רפואה
+    case '7': return 'הלימוד'; // אחר
+    default: return 'הלימוד';
+  }
+};

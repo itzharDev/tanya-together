@@ -15,7 +15,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit, editGroup 
   const [bookType, setBookType] = useState(editGroup?.bookType || '1');
   const [groupName, setGroupName] = useState(editGroup?.name || '');
   const [groupDescription, setGroupDescription] = useState(editGroup?.description || '');
-  const [groupDedication, setGroupDedication] = useState(editGroup?.intention || '');
+  const [groupDedication, setGroupDedication] = useState(editGroup?.dedicatedTo || '');
   const [groupIntention, setGroupIntention] = useState(editGroup?.intention || '1');
   const [bookImage, setBookImage] = useState(editGroup?.bookImage || '');
   
@@ -32,7 +32,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit, editGroup 
       setBookType(editGroup.bookType || '1');
       setGroupName(editGroup.name || '');
       setGroupDescription(editGroup.description || '');
-      setGroupDedication(editGroup.intention || '');
+      setGroupDedication(editGroup.dedicatedTo || '');
       setGroupIntention(editGroup.intention || '1');
       setBookImage(editGroup.bookImage || '');
     } else {
@@ -170,23 +170,22 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit, editGroup 
           </div>
 
           {/* Dedication Row */}
-          <div className="flex gap-2">
-            {/* Dedication Input */}
-            <input
-              type="text"
-              value={groupDedication}
-              onChange={(e) => setGroupDedication(e.target.value)}
-              placeholder="הספר מוקדש ל"
-              className={`flex-grow p-3 border rounded text-right bg-white text-gray-800 placeholder-gray-500 focus:outline-none ${
-                errors.dedication ? 'border-red-500' : 'border-gray-300 focus:border-blue-500'
-              }`}
-            />
-
+          <div className="flex gap-2" style={{ direction: 'rtl' }}>
             {/* Intention Dropdown */}
             <select
               value={groupIntention}
               onChange={(e) => setGroupIntention(e.target.value)}
-              className="w-32 p-3 border border-gray-300 rounded bg-[#E9F4FF] text-right font-bold text-gray-800 focus:outline-none focus:border-blue-500"
+              className="w-32 p-3 pr-8 border border-gray-300 rounded bg-[#E9F4FF] text-right font-bold text-gray-800 focus:outline-none focus:border-blue-500"
+              style={{ 
+                direction: 'rtl',
+                backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23333\' d=\'M6 9L1 4h10z\'/%3E%3C/svg%3E")',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 0.5rem center',
+                backgroundSize: '12px',
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                MozAppearance: 'none'
+              }}
             >
               {intentions.map((intent) => (
                 <option key={intent.type} value={intent.type}>
@@ -194,10 +193,21 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit, editGroup 
                 </option>
               ))}
             </select>
+            
+            {/* Dedication Input */}
+            <input
+              type="text"
+              value={groupDedication}
+              onChange={(e) => setGroupDedication(e.target.value)}
+              placeholder="שם ושם האם"
+              className={`flex-grow p-3 border rounded text-right bg-white text-gray-800 placeholder-gray-500 focus:outline-none ${
+                errors.dedication ? 'border-red-500' : 'border-gray-300 focus:border-blue-500'
+              }`}
+            />
           </div>
 
-          {/* Book Image URL */}
-          <div>
+          {/* Book Image URL - Hidden */}
+          {/* <div>
             <input
               type="url"
               value={bookImage}
@@ -205,7 +215,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit, editGroup 
               placeholder="קישור לתמונת הספר (אופציונלי)"
               className="w-full p-3 border border-gray-300 rounded text-right bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-500"
             />
-          </div>
+          </div> */}
         </div>
 
         {/* Submit Button */}
