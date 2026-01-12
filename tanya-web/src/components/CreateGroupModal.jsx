@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
-import zhitIcon from '../assets/icons/vi.png';
-import dedicationIcon from '../assets/icons/dedication.png';
-import hazlahaIcon from '../assets/icons/hazlaha.png';
-import zarakayamaIcon from '../assets/icons/zarakayama.png';
-import refuaIcon from '../assets/icons/refua.png';
-import otherIcon from '../assets/icons/other.png';
+import { intentions } from '../constants/groupTypes';
 import tanyaIconImg from '../assets/icons/tanya_icon.svg';
 import menuBookIcon from '../assets/icons/menu_book.png';
 
@@ -15,29 +10,42 @@ const booksType = [
   { text: 'משניות', icon: menuBookIcon, type: '3' },
 ];
 
-const intentions = [
-  { text: 'זכות', icon: zhitIcon, type: '1' },
-  { text: 'ע״נ', icon: dedicationIcon, type: '2' },
-  { text: 'הצלחה', icon: hazlahaIcon, type: '3' },
-  { text: 'זחו״ק', icon: zarakayamaIcon, type: '4' },
-  { text: 'רפואה', icon: refuaIcon, type: '5' },
-  { text: 'אחר', icon: otherIcon, type: '7' },
-];
-
-export default function CreateGroupModal({ isOpen, onClose, onSubmit }) {
-  const [groupType, setGroupType] = useState(1); // 1=private, 2=public
-  const [bookType, setBookType] = useState('1');
-  const [groupName, setGroupName] = useState('');
-  const [groupDescription, setGroupDescription] = useState('');
-  const [groupDedication, setGroupDedication] = useState('');
-  const [groupIntention, setGroupIntention] = useState('1');
-  const [bookImage, setBookImage] = useState('');
+export default function CreateGroupModal({ isOpen, onClose, onSubmit, editGroup = null }) {
+  const [groupType, setGroupType] = useState(editGroup?.global ? 2 : (editGroup ? 1 : 2)); // 1=private, 2=public (default: כללי)
+  const [bookType, setBookType] = useState(editGroup?.bookType || '1');
+  const [groupName, setGroupName] = useState(editGroup?.name || '');
+  const [groupDescription, setGroupDescription] = useState(editGroup?.description || '');
+  const [groupDedication, setGroupDedication] = useState(editGroup?.intention || '');
+  const [groupIntention, setGroupIntention] = useState(editGroup?.intention || '1');
+  const [bookImage, setBookImage] = useState(editGroup?.bookImage || '');
   
   const [errors, setErrors] = useState({
     name: false,
     description: false,
     dedication: false,
   });
+
+  // Update state when editGroup changes
+  React.useEffect(() => {
+    if (editGroup) {
+      setGroupType(editGroup.global ? 2 : 1);
+      setBookType(editGroup.bookType || '1');
+      setGroupName(editGroup.name || '');
+      setGroupDescription(editGroup.description || '');
+      setGroupDedication(editGroup.intention || '');
+      setGroupIntention(editGroup.intention || '1');
+      setBookImage(editGroup.bookImage || '');
+    } else {
+      // Reset for new group
+      setGroupType(2);
+      setBookType('1');
+      setGroupName('');
+      setGroupDescription('');
+      setGroupDedication('');
+      setGroupIntention('1');
+      setBookImage('');
+    }
+  }, [editGroup]);
 
   const handleSubmit = () => {
     // Validate
@@ -55,6 +63,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit }) {
     
     // Submit
     onSubmit({
+      groupId: editGroup?.id,
       groupType,
       bookType,
       groupName,
@@ -81,7 +90,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit }) {
               <FaTimes />
             </button>
             <h2 className="text-[#04478E] text-xl font-bold flex-grow">
-              איזו התרגשות לפתוח ספר חדש!
+              {editGroup ? 'עריכת ספר' : 'איזו התרגשות לפתוח ספר חדש!'}
             </h2>
             <div className="w-6"></div> {/* Spacer for alignment */}
           </div>
@@ -205,7 +214,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit }) {
             onClick={handleSubmit}
             className="w-full bg-[#027EC5] text-white py-3 rounded font-bold text-lg hover:bg-[#026aa6] transition"
           >
-            צור קבוצה
+            {editGroup ? 'שמור שינויים' : 'צור קבוצה'}
           </button>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useSocket } from '../context/SocketContext'; // Import Socket Context
 import Parse from '../services/parse';
 import GroupCard from '../components/GroupCard';
 import CreateGroupModal from '../components/CreateGroupModal';
+import SideMenu from '../components/SideMenu';
 import { useNavigate } from 'react-router-dom';
 import { FaUser, FaEllipsisV } from 'react-icons/fa';
 
@@ -13,16 +14,17 @@ import arabicIcon from '../assets/icons/arabic.png';
 import listingIcon from '../assets/icons/listing.png';
 import menuBookIcon from '../assets/icons/menu_book.png';
 import homeIcon from '../assets/icons/home.png';
-import tanyaLogo from '../assets/icons/tanya_logo.png';
+import appLogo from '/app-logo.png';
 import bookSvg from '../assets/icons/book.svg';
+import emptyListImg from '/empty-list.png';
 
 const TabButton = ({ isActive, onClick, count, label }) => (
   <div 
     onClick={onClick}
     className={`flex-1 flex flex-col items-center justify-center p-2 rounded cursor-pointer border transition-colors ${
         isActive 
-            ? 'bg-white border-white text-[#04478E] opacity-100' 
-            : 'bg-transparent border-white text-white opacity-50 hover:bg-white/10'
+            ? 'bg-[#04478E] border-[#04478E] text-white' 
+            : 'bg-transparent border-[#04478E] text-[#04478E] hover:bg-white/10'
     }`}
   >
      <span className="font-bold text-sm">{count}</span>
@@ -39,6 +41,8 @@ export default function Feed() {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(null);
   
   const [counts, setCounts] = useState({ global: 0, shared: 0, private: 0 });
   const [groupsCache, setGroupsCache] = useState({ global: null, shared: null, private: null });
@@ -78,7 +82,10 @@ export default function Feed() {
             query.equalTo('global', true);
             break;
           case 'shared':
-            query.equalTo('members', email);
+            // Query for groups where members array contains an object with matching email
+            // but user is NOT the owner
+            query.equalTo('members.email', email);
+            query.notEqualTo('ownerEmail', email);
             break;
           case 'private':
             query.equalTo('ownerEmail', email);
@@ -119,9 +126,10 @@ export default function Feed() {
       globalQuery.equalTo('global', true);
       const g_global = await globalQuery.count();
       
-      // Count shared groups
+      // Count shared groups (where user is member but not owner)
       const sharedQuery = new Parse.Query('NewGroup');
-      sharedQuery.equalTo('members', email);
+      sharedQuery.equalTo('members.email', email);
+      sharedQuery.notEqualTo('ownerEmail', email);
       const g_shared = await sharedQuery.count();
       
       // Count private groups
@@ -141,6 +149,12 @@ export default function Feed() {
       navigate('/login');
       return;
     }
+    setEditingGroup(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditGroup = (group) => {
+    setEditingGroup(group);
     setIsModalOpen(true);
   };
 
@@ -151,41 +165,77 @@ export default function Feed() {
     }
 
     try {
-      const newGroup = new Parse.Object('NewGroup');
-      newGroup.set('global', groupData.groupType === 2);
-      newGroup.set('description', groupData.groupDescription);
-      newGroup.set('ownerId', currentUser.id);
-      newGroup.set('ownerName', currentUser.get('displayName') || 'אורח');
-      newGroup.set('ownerEmail', currentUser.get('email'));
-      newGroup.set('name', groupData.groupName);
-      newGroup.set('bookType', groupData.bookType);
-      newGroup.set('intention', groupData.groupIntention);
-      newGroup.set('book', []);
-      newGroup.set('inProgress', []);
-      newGroup.set('inProgressData', {}); // New field to track timestamps
-      newGroup.set('members', [currentUser.get('email')]); // Add creator as member
-      newGroup.set('booksReaded', 0);
-      
-      // Set max based on book type
-      const maxParts = groupData.bookType === '3' ? 525 : groupData.bookType === '2' ? 150 : 385;
-      newGroup.set('max', maxParts);
+      // Check if editing existing group
+      if (groupData.groupId) {
+        // Update existing group
+        const query = new Parse.Query('NewGroup');
+        const group = await query.get(groupData.groupId);
+        
+        group.set('global', groupData.groupType === 2);
+        group.set('description', groupData.groupDescription);
+        group.set('name', groupData.groupName);
+        group.set('intention', groupData.groupIntention);
+        
+        // Update book image if provided
+        if (groupData.bookImage && groupData.bookImage.trim() !== '') {
+          group.set('bookImage', groupData.bookImage);
+        } else {
+          group.unset('bookImage');
+        }
+        
+        await group.save();
+        
+        // Close modal, clear cache, and refresh
+        setIsModalOpen(false);
+        setEditingGroup(null);
+        setGroupsCache({ global: null, shared: null, private: null });
+        fetchGroups();
+        
+        alert('הקבוצה עודכנה בהצלחה!');
+      } else {
+        // Create new group
+        const newGroup = new Parse.Object('NewGroup');
+        newGroup.set('global', groupData.groupType === 2);
+        newGroup.set('description', groupData.groupDescription);
+        newGroup.set('ownerId', currentUser.id);
+        newGroup.set('ownerName', currentUser.get('displayName') || 'אורח');
+        newGroup.set('ownerEmail', currentUser.get('email'));
+        newGroup.set('name', groupData.groupName);
+        newGroup.set('bookType', groupData.bookType);
+        newGroup.set('intention', groupData.groupIntention);
+        newGroup.set('book', []);
+        newGroup.set('inProgress', []);
+        newGroup.set('inProgressData', {}); // New field to track timestamps
+        newGroup.set('members', [{
+          email: currentUser.get('email'),
+          name: currentUser.get('displayName') || currentUser.get('email') || 'משתמש',
+          pic: currentUser.get('photoUrl') || '',
+          admin: true
+        }]); // Add creator as member with name, profile picture and admin rights
+        newGroup.set('booksReaded', 0);
+        
+        // Set max based on book type
+        const maxParts = groupData.bookType === '3' ? 525 : groupData.bookType === '2' ? 150 : 385;
+        newGroup.set('max', maxParts);
 
-      // Set book image if provided
-      if (groupData.bookImage && groupData.bookImage.trim() !== '') {
-        newGroup.set('bookImage', groupData.bookImage);
+        // Set book image if provided
+        if (groupData.bookImage && groupData.bookImage.trim() !== '') {
+          newGroup.set('bookImage', groupData.bookImage);
+        }
+
+        await newGroup.save();
+        
+        // Close modal, clear cache, switch to private tab, and refresh
+        setIsModalOpen(false);
+        setEditingGroup(null);
+        setGroupsCache({ global: null, shared: null, private: null });
+        setActiveTab('private');
+        
+        alert('הקבוצה נוצרה בהצלחה!');
       }
-
-      await newGroup.save();
-      
-      // Close modal, clear cache, switch to private tab, and refresh
-      setIsModalOpen(false);
-      setGroupsCache({ global: null, shared: null, private: null });
-      setActiveTab('private');
-      
-      alert('הקבוצה נוצרה בהצלחה!');
     } catch (error) {
-      console.error('Error creating group:', error);
-      alert('שגיאה ביצירת הקבוצה');
+      console.error('Error creating/updating group:', error);
+      alert('שגיאה בשמירת הקבוצה');
     }
   };
 
@@ -198,10 +248,10 @@ export default function Feed() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#E9F4FF] overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden" style={{ background: 'linear-gradient(180deg, rgb(62, 97, 164) 0%, rgb(199, 216, 233) 30%, rgb(199, 216, 233) 100%)' }}>
       
       {/* Top Bar */}
-      <div className="pt-4 px-4 pb-2 bg-gradient-to-b from-[#003A92] to-[#003A92] text-white">
+      <div className="pt-4 px-4 pb-2 text-white">
           <div className="max-w-7xl mx-auto w-full">
               <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
@@ -216,11 +266,11 @@ export default function Feed() {
                   </div>
 
                   {/* Logo Centered */}
-                  <img src={tanyaLogo} alt="Tanya" className="h-8" />
+                  <img src={appLogo} alt="Tanya" className="h-8" />
 
-                  {/* Menu / Logout */}
+                  {/* Menu Button */}
                   {currentUser ? (
-                    <button onClick={() => { logout(); navigate('/login'); }}>
+                    <button onClick={() => setIsSideMenuOpen(true)}>
                         <FaEllipsisV />
                     </button>
                   ) : (
@@ -275,18 +325,26 @@ export default function Feed() {
           {loading ? (
               <div className="text-center mt-10 text-gray-500">טוען...</div>
           ) : displayedGroups.length === 0 ? (
-              <div className="text-center mt-10 text-xl text-gray-500 font-bold">לא נמצאו ספרים</div>
+              <div className="flex flex-col items-center justify-center mt-20 px-4">
+                  <img src={emptyListImg} alt="Empty" className="w-48 h-48 mb-6" />
+                  {activeTab === 'private' && (
+                      <div className="text-center text-gray-600 text-lg leading-relaxed">
+                          <div>עדיין לא פתחת ספר משלך?</div>
+                          <div>אל דאגה, לעולם לא מאוחר...</div>
+                      </div>
+                  )}
+              </div>
           ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl mx-auto w-full">
                   {displayedGroups.map((g, idx) => (
-                      <GroupCard key={g.id} group={g} index={idx} />
+                      <GroupCard key={g.id} group={g} index={idx} onEdit={handleEditGroup} currentUser={currentUser} />
                   ))}
               </div>
           )}
       </div>
 
       {/* Floating Action Button (FAB) replacement - Bottom Left Fixed */}
-      <div className="absolute bottom-20 left-4 z-10">
+      <div className="fixed bottom-20 left-4 z-10">
           <button 
             onClick={handleOpenModal}
             className="bg-[#027EC5] text-white w-16 h-16 rounded-lg shadow-lg flex flex-col items-center justify-center space-y-1 hover:bg-[#026aa6]"
@@ -300,12 +358,27 @@ export default function Feed() {
       {/* Create Group Modal */}
       <CreateGroupModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingGroup(null);
+        }}
         onSubmit={handleCreateGroup}
+        editGroup={editingGroup}
       />
 
-      {/* Socket Stats Bar */}
-      {(connections > -1) && (
+      {/* Side Menu */}
+      <SideMenu
+        isOpen={isSideMenuOpen}
+        onClose={() => setIsSideMenuOpen(false)}
+        currentUser={currentUser}
+        onLogout={() => {
+          logout();
+          navigate('/login');
+        }}
+      />
+
+      {/* Socket Stats Bar - only show when 10+ connections */}
+      {(connections >= 10) && (
           <div className="absolute bottom-16 left-0 right-0 bg-[#DAF2FF] rounded-t-2xl shadow-[0_-4px_-6px_rgba(0,0,0,0.1)] py-2 px-4 z-0">
              <div className="max-w-7xl mx-auto w-full flex justify-around text-[#04478E] font-bold text-center text-xs">
                 <div>

@@ -14,9 +14,7 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    if (!currentUser) return;
-
-    // Fetch initial members count (from Parse _User count) based on logic in SocketioCubit
+    // Fetch initial members count (from Parse _User count) - works for all users
     const fetchMemberCount = async () => {
       try {
         const query = new Parse.Query(Parse.User);
@@ -29,11 +27,11 @@ export const SocketProvider = ({ children }) => {
 
     fetchMemberCount();
 
-    // Initialize Socket
+    // Initialize Socket for both authenticated and anonymous users
     const newSocket = io('https://tanya.dvarmalchus.co.il', {
       transports: ['websocket'],
       autoConnect: true,
-      query: { user: currentUser.id } // Use objectId
+      query: { user: currentUser?.id || 'anonymous' } // Use objectId or anonymous
     });
 
     newSocket.on('connect', () => {
@@ -55,7 +53,7 @@ export const SocketProvider = ({ children }) => {
     return () => {
       if (newSocket) newSocket.disconnect();
     };
-  }, [currentUser]);
+  }, []); // Run once on mount
 
   const value = {
     connections,

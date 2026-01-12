@@ -139,10 +139,10 @@ export const AuthProvider = ({ children }) => {
         } catch (loginError) {
           console.error('Login also failed:', loginError);
           
-          // If the user exists but password is wrong, they likely signed up via Flutter app
-          // with Google OAuth which uses a different authentication method
-          alert('המשתמש קיים במערכת.\n\nלא ניתן להתחבר באמצעות Google כרגע בגרסת הווב.\nאנא השתמש בהתחברות בטלפון או באפליקציה הניידת.');
-          throw new Error('User exists - use phone login or mobile app');
+          // If the user exists but password is wrong, they likely signed up via phone
+          // Suggest using phone login instead
+          alert('המשתמש קיים במערכת.\n\nאנא התחבר/י באמצעות מספר הטלפון שלך.');
+          throw new Error('User exists - use phone login');
         }
       }
       

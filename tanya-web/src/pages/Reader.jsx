@@ -5,7 +5,7 @@ import { useSSR } from '../context/SSRContext';
 import Parse from '../services/parse';
 import { getHebrewGematria } from '../utils/hebrew';
 import { FaArrowLeft, FaEllipsisV, FaCheck, FaRandom } from 'react-icons/fa';
-import tanyaIcon from '../assets/icons/tanya_icon.svg'; 
+import tanyaIcon from '../assets/icons/tanya_icon.svg';
 
 export default function Reader() {
   const { groupId } = useParams();
@@ -18,6 +18,46 @@ export default function Reader() {
   const [url, setUrl] = useState('');
   const [showJoinPopup, setShowJoinPopup] = useState(false);
   const [membershipChecked, setMembershipChecked] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [buttonClicked, setButtonClicked] = useState(false);
+  const [numPages, setNumPages] = useState(null);
+  const [pageWidth, setPageWidth] = useState(0);
+  const [isClient, setIsClient] = useState(false);
+  const [PDFComponents, setPDFComponents] = useState(null);
+
+  // Load react-pdf dynamically on client side only
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('react-pdf').then((module) => {
+        const { Document, Page, pdfjs } = module;
+        // Set up PDF.js worker
+        pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+        setPDFComponents({ Document, Page });
+        setIsClient(true);
+      });
+      
+      // Import CSS dynamically
+      import('react-pdf/dist/Page/AnnotationLayer.css');
+      import('react-pdf/dist/Page/TextLayer.css');
+    }
+  }, []);
+
+  // Set page width on mount and resize
+  useEffect(() => {
+    const updateWidth = () => {
+      if (typeof window !== 'undefined') {
+        setPageWidth(Math.min(window.innerWidth, 800));
+      }
+    };
+    
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
+  const onDocumentLoadSuccess = ({ numPages }) => {
+    setNumPages(numPages);
+  };
 
   useEffect(() => {
     if (groupId) {
@@ -34,7 +74,7 @@ export default function Reader() {
       const userEmail = currentUser?.get('email');
       
       // If user is logged in and not a member, show popup
-      if (currentUser && userEmail && !members.includes(userEmail)) {
+      if (currentUser && userEmail && !members.some(m => m.email === userEmail)) {
         setShowJoinPopup(true);
       }
       // If user is not logged in, show popup to ask if they want to join
@@ -249,6 +289,10 @@ export default function Reader() {
           return;
       }
       
+      // Trigger button animation
+      setButtonClicked(true);
+      setTimeout(() => setButtonClicked(false), 600);
+      
       try {
           const query = new Parse.Query('NewGroup');
           const g = await query.get(group.id);
@@ -282,13 +326,17 @@ export default function Reader() {
           g.set('booksReaded', booksReaded);
           await g.save();
           
+          // Update local state
+          setGroup(prev => ({ ...prev, book, booksReaded, inProgress: Object.keys(inProgressData) }));
+          
+          // Show success popup instead of navigating away
           if (typeof window !== 'undefined') {
-            navigate('/feed');
+            setShowSuccessPopup(true);
           }
       } catch (error) {
           console.error("Error finishing part:", error);
           if (typeof window !== 'undefined') {
-            alert('שגיאה בשׇירת התקדמות: ' + error.message);
+            alert('שגיאה בש׷ירת התקדמות: ' + error.message);
           }
       }
   };
@@ -305,9 +353,15 @@ export default function Reader() {
       const g = await query.get(groupId);
       const members = g.get('members') || [];
       const userEmail = currentUser.get('email');
+      const userName = currentUser.get('displayName') || currentUser.get('email') || 'משתמש';
+      const userPhoto = currentUser.get('photoUrl') || '';
       
-      if (!members.includes(userEmail)) {
-        members.push(userEmail);
+      if (!members.some(m => m.email === userEmail)) {
+        members.push({
+          email: userEmail,
+          name: userName,
+          pic: userPhoto
+        });
         g.set('members', members);
         await g.save();
         
@@ -414,14 +468,14 @@ export default function Reader() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#E9F4FF]">
+    <div className="flex flex-col h-screen" style={{ background: 'linear-gradient(180deg, rgb(62, 97, 164) 0%, rgb(199, 216, 233) 30%, rgb(199, 216, 233) 100%)' }}>
        {/* Header */}
-       <div className="bg-[#003A92] p-4 text-white flex items-center justify-between">
+       <div className="p-4 text-white flex items-center justify-between">
             <button onClick={handleBack}><FaArrowLeft /></button>
             <div className="flex flex-col items-center">
               <div className="font-bold text-lg">ספר {displayGroup.name}</div>
               {group?.booksReaded > 0 && (
-                <div className="text-xs text-[#E9F4FF]/80">ספרים שהושלמו: {group.booksReaded}</div>
+                <div className="text-xs text-white/80">ספרים שהושלמו: {group.booksReaded}</div>
               )}
             </div>
             <button><FaEllipsisV /></button>
@@ -429,7 +483,7 @@ export default function Reader() {
 
        {/* Progress Info - Only show for authenticated users */}
        {currentUser && (
-       <div className="bg-[#003A92] px-6 pb-4 text-white">
+       <div className="px-6 pb-4 text-white">
            <div className="flex justify-between text-sm mb-1">
                <span>{group?.book?.length}/{group?.max}</span>
                <span>סיום הספר</span>
@@ -446,37 +500,79 @@ export default function Reader() {
        )}
 
        {/* Viewer */}
-       <div className="flex-grow relative bg-white overflow-hidden">
+       <div className="flex-grow relative bg-white" style={{ overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
            {group?.bookType === '2' ? (
                <iframe 
                  src={url} 
                  title="Content"
                  className="w-full h-full border-0"
+                 scrolling="yes"
                  // Note: Sandbox might block scripts on target site, but needed for security if creating generic viewer
                  // sandbox="allow-scripts allow-same-origin"
                />
            ) : (
-               <iframe 
-                 src={url} 
-                 title="PDF Viewer"
-                 className="w-full h-full border-0"
-               />
+               // PDF Viewer using react-pdf (client-side only)
+               <div className="w-full flex flex-col items-center py-4">
+                 {!isClient || !PDFComponents ? (
+                   <div className="flex items-center justify-center h-64">
+                     <div className="text-gray-500">טוען...</div>
+                   </div>
+                 ) : (() => {
+                   const { Document, Page } = PDFComponents;
+                   return (
+                     <>
+                       <Document
+                         file={url}
+                         onLoadSuccess={onDocumentLoadSuccess}
+                         loading={
+                           <div className="flex items-center justify-center h-64">
+                             <div className="text-gray-500">טוען PDF...</div>
+                           </div>
+                         }
+                         error={
+                           <div className="flex items-center justify-center h-64 text-red-500">
+                             שגיאה בטעינת PDF
+                           </div>
+                         }
+                       >
+                         {numPages && Array.from(new Array(numPages), (el, index) => (
+                           <Page
+                             key={`page_${index + 1}`}
+                             pageNumber={index + 1}
+                             width={pageWidth}
+                             renderTextLayer={true}
+                             renderAnnotationLayer={true}
+                             className="mb-4 shadow-lg"
+                           />
+                         ))}
+                       </Document>
+                       {numPages && (
+                         <div className="text-gray-500 text-sm mt-4 mb-8">
+                           סה"כ {numPages} עמודים
+                         </div>
+                       )}
+                     </>
+                   );
+                 })()}
+               </div>
            )}
        </div>
 
-       {/* Action Buttons - Floating */}
-       <div className="absolute bottom-10 left-6">
+       {/* Action Buttons - Fixed to bottom corners */}
+       <div className="fixed bottom-10 left-6 z-30">
            <button 
              onClick={handleFinish}
-             className="bg-[#10AC52] text-white w-16 h-16 rounded-lg shadow-lg flex flex-col items-center justify-center hover:bg-[#0e9647]"
+             className={`bg-[#10AC52] text-white w-16 h-16 rounded-lg shadow-lg flex flex-col items-center justify-center hover:bg-[#0e9647] transition-transform ${
+               buttonClicked ? 'scale-125 rotate-12' : 'scale-100'
+             }`}
            >
               <FaCheck className="text-xl mb-1" />
-              <span className="text-[10px] font-bold text-center leading-tight">סיימתי<br/>את הפרק</span>
+              <span className="text-[10px] font-bold text-center leading-tight">קראתי<br/>את הקטע</span>
            </button>
        </div>
        
-       {/* Get Different Part Button - Floating Bottom Right */}
-       <div className="absolute bottom-10 right-6">
+       {/* Get Different Part Button - Fixed to bottom right */}
+       <div className="fixed bottom-10 right-6 z-30">
            <button 
              onClick={handleGetDifferentPart}
              disabled={loading}
@@ -486,6 +582,61 @@ export default function Reader() {
               <span className="text-[10px] font-bold text-center leading-tight">קבל<br/>קטע אחר</span>
            </button>
        </div>
+
+       {/* Dedication Text - Bottom Static */}
+       <div className="bg-white/90 py-2 text-center text-gray-700 text-sm">
+         לע"נ יוסף חיים יעקב בן מיכאל סאסי אביטבול ז"ל
+       </div>
+
+       {/* Success Popup - Read Another Part */}
+       {showSuccessPopup && (
+         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowSuccessPopup(false)}>
+           <div className="bg-white rounded-lg p-6 mx-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+             <div className="text-center mb-6">
+               <div className="text-6xl mb-4">✅</div>
+               <h2 className="text-2xl font-bold text-[#10AC52] mb-2">
+                 כל הכבוד!
+               </h2>
+               <p className="text-gray-700">
+                 סיימת את הקטע
+               </p>
+             </div>
+             <div className="flex flex-col gap-3">
+               <button
+                 onClick={() => {
+                   setShowSuccessPopup(false);
+                   handleGetDifferentPart();
+                 }}
+                 className="w-full px-6 py-3 bg-[#027EC5] text-white rounded-lg font-bold hover:bg-[#026aa6] transition text-lg"
+               >
+                 לקריאת קטע נוסף
+               </button>
+               
+               <a
+                 href={`https://wa.me/972555637282?text=${encodeURIComponent(
+                   `היי,\nאני מעוניין לקבל תזכורת להמשך לימוד בקבוצה:\n${window.location.origin}/group/${groupId}`
+                 )}`}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 className="w-full px-6 py-3 bg-[#25D366] text-white rounded-lg font-bold hover:bg-[#20BA5A] transition flex items-center justify-center gap-2"
+               >
+                 <span>📲</span>
+                 הרשם לקבלת תזכורת להמשך לימוד
+               </a>
+               
+               <button
+                 onClick={() => {
+                   setShowSuccessPopup(false);
+                   navigate('/feed');
+                 }}
+                 className="w-full px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300 transition"
+               >
+                 חזרה לעמוד הראשי
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
 
        {/* Join Group Popup */}
        {showJoinPopup && (

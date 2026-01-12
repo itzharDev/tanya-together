@@ -54,29 +54,42 @@ async function createServer() {
       const { html, initialData } = await render(url)
 
       // Build meta tags based on initial data
-      let title, description, image
+      let title, description, image, pageUrl
       
       if (initialData && initialData.name) {
         title = `ספר ${initialData.name} - תניא המחולק`
         description = initialData.description || `קרא את ספר ${initialData.name} - תניא המחולק`
-        image = initialData.bookImage || 'https://tanya-together.dvarmalchus.co.il/tanya-logo-preview.png'
+        image = initialData.bookImage || 'https://tanya.dvarmalchus.co.il/tanya-logo.png'
+        pageUrl = `https://tanya.dvarmalchus.co.il${url}`
       } else {
         // Default meta tags for non-group pages
-        title = 'תניא המחולק'
-        description = 'קרא והשלם ספרים בקבוצה'
-        image = 'https://tanya-together.dvarmalchus.co.il/tanya-logo-preview.png'
+        title = 'תניא המחולק - לימוד תניא ביחד בקבוצות'
+        description = 'תניא המחולק - פלטפורמה ללימוד תניא משותף בקבוצות. השלימו את התניא ביחד עם חברים ומשפחה.'
+        image = 'https://tanya.dvarmalchus.co.il/tanya-logo.png'
+        pageUrl = 'https://tanya.dvarmalchus.co.il'
       }
       
       const metaTags = `
     <title>${escapeHtml(title)}</title>
+    <meta name="title" content="${escapeHtml(title)}" />
+    <meta name="description" content="${escapeHtml(description)}" />
+    <link rel="canonical" href="${escapeHtml(pageUrl)}" />
+    
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="${escapeHtml(pageUrl)}" />
     <meta property="og:title" content="${escapeHtml(title)}" />
     <meta property="og:description" content="${escapeHtml(description)}" />
-    ${image ? `<meta property="og:image" content="${escapeHtml(image)}" />` : ''}
+    <meta property="og:image" content="${escapeHtml(image)}" />
+    <meta property="og:locale" content="he_IL" />
+    <meta property="og:site_name" content="תניא המחולק" />
+    
+    <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="${escapeHtml(pageUrl)}" />
     <meta property="twitter:title" content="${escapeHtml(title)}" />
     <meta property="twitter:description" content="${escapeHtml(description)}" />
-    ${image ? `<meta property="twitter:image" content="${escapeHtml(image)}" />` : ''}`
+    <meta property="twitter:image" content="${escapeHtml(image)}" />`
 
       // Inject rendered HTML and updated meta tags
       const finalHtml = template

@@ -4,6 +4,8 @@ import { SocketProvider } from './context/SocketContext';
 import Login from './pages/Login';
 import Feed from './pages/Feed';
 import Reader from './pages/Reader';
+import GroupDetails from './pages/GroupDetails';
+import Segula from './pages/Segula';
 
 function AppContent() {
   return (
@@ -15,6 +17,8 @@ function AppContent() {
         </SocketProvider>
       } />
       <Route path="/group/:groupId" element={<Reader />} />
+      <Route path="/group-details/:groupId" element={<GroupDetails />} />
+      <Route path="/segula" element={<Segula />} />
       <Route path="/" element={<Navigate to="/feed" replace />} />
       <Route path="*" element={<Navigate to="/feed" replace />} />
     </Routes>
