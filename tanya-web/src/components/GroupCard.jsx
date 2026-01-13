@@ -1,8 +1,9 @@
 import React from 'react';
-import { FaShareAlt, FaUser, FaEdit } from 'react-icons/fa';
+import { FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import bookIcon from '../assets/icons/book.svg'; 
 import tanyaIcon from '../assets/icons/tanya_icon.svg';
+import sunglassesIcon from '../assets/icons/sunglasses.png';
 import { getIntentionIcon, getIntentionPrefix } from '../constants/groupTypes';
 
 // Helper to get Book Type Name
@@ -69,70 +70,68 @@ export default function GroupCard({ group, index, onEdit, currentUser }) {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border-2 border-transparent hover:border-blue-100 transition-colors h-full">
-      <div className="bg-white rounded-lg p-4 flex flex-col items-stretch space-y-3">
+      <div className="bg-white rounded-lg p-3 flex flex-col items-stretch space-y-2">
         
         {/* Header: Title | Share */}
-        <div className="flex items-center justify-between text-[#04478E]">
-          <div className="flex-grow text-right px-4">
-            <div className="font-bold text-lg line-clamp-2">
+        <div className="flex items-start justify-between text-[#04478E]">
+          <div className="flex-grow text-right">
+            <div className="font-bold text-lg line-clamp-2 mb-1">
               ספר {bookTypeName}: {name}
             </div>
-             {booksReaded > 0 && (
-               <div className="text-xs text-gray-500">ספרים שהושלמו: {booksReaded}</div>
-             )}
-           </div>
+            
+            {/* Members Avatars under title */}
+            <div 
+              onClick={handleMembersClick}
+              className="flex justify-start overflow-hidden cursor-pointer hover:opacity-80 transition-opacity mb-2"
+              style={{ direction: 'rtl' }}
+            >
+                 {members.slice(0, 7).map((member, i) => {
+                   const emailInitials = member.email ? member.email.substring(0, 2).toUpperCase() : '??';
+                   
+                   return (
+                     <div key={i} className="relative inline-block w-[30px] h-[30px] rounded-full border-2 border-white bg-gradient-to-br from-[#027EC5] to-[#003A92] flex items-center justify-center overflow-hidden">
+                        {member.pic ? (
+                          <img 
+                            src={member.pic} 
+                            alt={member.email} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-white text-[10px] font-bold">{emailInitials}</span>
+                        )}
+                     </div>
+                   );
+                 })}
+            </div>
+            
+            {booksReaded > 0 && (
+              <div className="text-xs text-gray-500">ספרים שהושלמו: {booksReaded}</div>
+            )}
+          </div>
 
-           <div className="flex flex-col gap-2">
-             <button 
-               onClick={handleShare}
-               className="flex items-center gap-2 text-gray-600 hover:text-[#04478E] transition-colors cursor-pointer"
-             >
-               <span className="text-sm">שיתוף</span>
-               <FaShareAlt />
-             </button>
-             {canEdit && (
-               <button 
-                 onClick={() => onEdit && onEdit(group)}
-                 className="flex items-center gap-2 text-gray-600 hover:text-[#04478E] transition-colors cursor-pointer"
-               >
-                 <span className="text-sm">עריכה</span>
-                 <FaEdit />
-               </button>
-             )}
-           </div>
-        </div>
-
-        {/* Members Avatars (Right Aligned) */}
-        <div 
-          onClick={handleMembersClick}
-          className="flex justify-start overflow-hidden py-1 cursor-pointer hover:opacity-80 transition-opacity"
-          style={{ direction: 'rtl' }}
-        >
-             {members.slice(0, 7).map((member, i) => {
-               // Get first 2 letters from email
-               const emailInitials = member.email ? member.email.substring(0, 2).toUpperCase() : '??';
-               
-               return (
-                 <div key={i} className="relative inline-block w-[30px] h-[30px] rounded-full border-2 border-white bg-gradient-to-br from-[#027EC5] to-[#003A92] flex items-center justify-center overflow-hidden">
-                    {/* Display member profile picture or email initials */}
-                    {member.pic ? (
-                      <img 
-                        src={member.pic} 
-                        alt={member.email} 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-white text-[10px] font-bold">{emailInitials}</span>
-                    )}
-                    {/* Online indicator dot - hidden for now */}
-                    {/* <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white bg-green-400 transform translate-x-1/3 -translate-y-1/3"></span> */}
-                 </div>
-               );
-             })}
+          <div className="flex flex-col gap-2">
+            <button 
+              onClick={handleShare}
+              className="flex items-center gap-2 px-3 py-1.5 bg-white rounded text-[#04478E] hover:bg-gray-50 transition-colors"
+            >
+              <img src="/share.png" alt="share" className="w-4 h-4" />
+              <span className="text-sm">שיתוף</span>
+            </button>
+            {canEdit && (
+              <button 
+                onClick={() => onEdit && onEdit(group)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white rounded text-[#04478E] hover:bg-gray-50 transition-colors"
+                style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}
+              >
+                <img src="/edit.png" alt="edit" className="w-4 h-4" />
+                <span className="text-sm">עריכה</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Progress Bar Row */}
-        <div className="mt-2">
+        <div className="pt-3">
             <div className="flex items-center gap-4">
                 {/* Progress bar container with labels */}
                 <div className="flex-grow">
@@ -164,14 +163,22 @@ export default function GroupCard({ group, index, onEdit, currentUser }) {
         </div>
 
         {/* Action Button & Status */}
-        <div className="flex items-center mt-2">
+        <div className="flex items-center">
              <div className="flex-grow text-right">
-                <div className="text-sm text-gray-600 mb-1">
-                  {inProgress.length > 0 ? `${inProgress.length} פרטים בקריאה כעת` : ''}
-                </div>
+                {inProgress.length > 0 && (
+                  <div className="flex items-center gap-2 mb-1">
+                    <img src={sunglassesIcon} alt="reading" className="w-5 h-5" />
+                    <span className="text-xs text-gray-500">{inProgress.length} פרקים בקריאה כעת</span>
+                  </div>
+                )}
                 {dedicatedTo && (
                   <div className="flex items-center gap-2">
-                    <img src={getIntentionIcon(intention)} alt="intention" className="w-6 h-6 flex-shrink-0" />
+                    <img 
+                      src={getIntentionIcon(intention)} 
+                      alt="intention" 
+                      className="w-6 h-6 flex-shrink-0" 
+                      style={{ filter: 'brightness(0) saturate(100%) invert(18%) sepia(89%) saturate(1729%) hue-rotate(200deg) brightness(95%) contrast(101%)' }}
+                    />
                     <div className="text-xs text-gray-500 line-clamp-2 flex-1 text-right">
                       {getIntentionPrefix(intention)} {dedicatedTo}
                     </div>
@@ -181,7 +188,7 @@ export default function GroupCard({ group, index, onEdit, currentUser }) {
 
              <button 
                onClick={() => navigate(`/group/${group.id}`)}
-               className="bg-[#027EC5] text-white px-6 py-2 rounded shadow font-bold hover:bg-[#026aa6] transition"
+               className="bg-[#027EC5] text-white px-4 py-1 rounded shadow font-bold hover:bg-[#026aa6] transition"
              >
                 {inProgress.length === 0 ? 'לתחילת הקריאה' : 'להמשך קריאה'}
              </button>
