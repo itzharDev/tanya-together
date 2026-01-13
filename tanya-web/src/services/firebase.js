@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getAnalytics, isSupported } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBnELeq1-eMVIK2y8vhZ0fBswxtoh7zigk",
@@ -8,9 +9,22 @@ const firebaseConfig = {
   projectId: "socialtanya-2d181",
   storageBucket: "socialtanya-2d181.appspot.com",
   messagingSenderId: "217335510648",
-  appId: "1:217335510648:web:be672e43cb962fea5adf8d"
+  appId: "1:217335510648:web:be672e43cb962fea5adf8d",
+  measurementId: "G-DTS5FQYEGM"
 };
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
+// Initialize Analytics only if supported (not in SSR)
+let analytics = null;
+if (typeof window !== 'undefined') {
+  isSupported().then(yes => {
+    if (yes) {
+      analytics = getAnalytics(app);
+    }
+  });
+}
+
+export { analytics };
 export default app;

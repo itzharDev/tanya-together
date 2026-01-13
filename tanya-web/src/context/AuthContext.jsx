@@ -8,6 +8,13 @@ import {
 } from "firebase/auth";
 import { auth } from '../services/firebase';
 import Parse from '../services/parse';
+import { 
+  logLogin, 
+  logSignup, 
+  logLogout, 
+  setAnalyticsUserId, 
+  setAnalyticsUserProperties 
+} from '../utils/analytics';
 
 const AuthContext = createContext();
 
@@ -77,8 +84,10 @@ export const AuthProvider = ({ children }) => {
       parseUser.set("password", phoneNumber); // WARNING: This pattern from Flutter app is insecure but replicating strictly.
       parseUser.set("email", `${phoneNumber}@socialtanya.com`);
       
+      let isNewUser = false;
       try {
         await parseUser.signUp();
+        isNewUser = true;
       } catch (error) {
         // If already exists, login
         if (error.code === 202) { // Account already exists
@@ -94,6 +103,17 @@ export const AuthProvider = ({ children }) => {
           currentUser.set('displayName', userName);
           await currentUser.save();
       }
+      
+      // Analytics tracking
+      if (isNewUser) {
+        logSignup('phone');
+      } else {
+        logLogin('phone');
+      }
+      setAnalyticsUserId(currentUser.id);
+      setAnalyticsUserProperties({
+        login_method: 'phone'
+      });
       
       setCurrentUser(currentUser);
       return currentUser;
@@ -118,6 +138,7 @@ export const AuthProvider = ({ children }) => {
       let parseUser;
       
       // Try to signup first
+      let isNewUser = false;
       try {
         parseUser = new Parse.User();
         parseUser.set("username", email);
@@ -128,6 +149,7 @@ export const AuthProvider = ({ children }) => {
         parseUser.set('googleId', user.uid);
         
         await parseUser.signUp();
+        isNewUser = true;
         console.log('New user created successfully');
       } catch (signupError) {
         // Signup failed - user probably already exists, try to login
@@ -156,6 +178,17 @@ export const AuthProvider = ({ children }) => {
         await parseUser.save();
       }
       
+      // Analytics tracking
+      if (isNewUser) {
+        logSignup('google');
+      } else {
+        logLogin('google');
+      }
+      setAnalyticsUserId(parseUser.id);
+      setAnalyticsUserProperties({
+        login_method: 'google'
+      });
+      
       setCurrentUser(parseUser);
       return parseUser;
 
@@ -167,6 +200,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      logLogout();
       await Parse.User.logOut();
       await signOut(auth);
       setCurrentUser(null);

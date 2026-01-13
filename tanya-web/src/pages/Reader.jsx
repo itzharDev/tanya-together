@@ -6,6 +6,7 @@ import Parse from '../services/parse';
 import { getHebrewGematria } from '../utils/hebrew';
 import { FaArrowLeft, FaEllipsisV, FaCheck, FaRandom } from 'react-icons/fa';
 import tanyaIcon from '../assets/icons/tanya_icon.svg';
+import { getIntentionPrefix } from '../constants/groupTypes';
 
 export default function Reader() {
   const { groupId } = useParams();
@@ -198,6 +199,8 @@ export default function Reader() {
             name: g.get('name'),
             bookImage: g.get('bookImage') || null,
             booksReaded: g.get('booksReaded') || 0,
+            dedicatedTo: g.get('dedicatedTo') || '',
+            intention: g.get('intention') || '1',
         };
         
         // Determine Part - exclude both completed and in-progress parts
@@ -469,7 +472,13 @@ export default function Reader() {
        <div className="p-4 text-white flex items-center justify-between">
             <button onClick={handleBack}><FaArrowLeft /></button>
             <div className="flex flex-col items-center">
-              <div className="font-bold text-lg">ספר {displayGroup.name}</div>
+              {group?.dedicatedTo ? (
+                <div className="font-bold text-lg text-center">
+                  {getIntentionPrefix(group.intention || '1')} {group.dedicatedTo}
+                </div>
+              ) : (
+                <div className="font-bold text-lg">ספר {displayGroup.name}</div>
+              )}
               {group?.booksReaded > 0 && (
                 <div className="text-xs text-white/80">ספרים שהושלמו: {group.booksReaded}</div>
               )}
