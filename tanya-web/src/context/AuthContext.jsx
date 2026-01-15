@@ -26,6 +26,12 @@ export const AuthProvider = ({ children }) => {
   const [verificationId, setVerificationId] = useState(null);
 
   useEffect(() => {
+    // Skip during SSR
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+    
     // Check for existing Parse user session
     const checkUser = async () => {
       try {
@@ -43,29 +49,57 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const setupRecaptcha = (elementId) => {
+    if (typeof window === 'undefined' || !auth) return;
+    
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, elementId, {
         'size': 'invisible',
         'callback': (response) => {
           // reCAPTCHA solved, allow signInWithPhoneNumber.
+          console.log('reCAPTCHA solved');
+        },
+        'expired-callback': () => {
+          // Response expired. Ask user to solve reCAPTCHA again.
+          console.log('reCAPTCHA expired');
         }
+      });
+      
+      // Render the reCAPTCHA widget
+      window.recaptchaVerifier.render().catch(error => {
+        console.error('Error rendering reCAPTCHA:', error);
       });
     }
   };
 
   const loginWithPhone = async (phoneNumber) => {
+    if (typeof window === 'undefined' || !auth) {
+      throw new Error("Phone login is only available in the browser");
+    }
+    
     try {
       if (!window.recaptchaVerifier) {
         throw new Error("Recaptcha not initialized. Call setupRecaptcha first.");
       }
-      // Format number for Israel if not already formatted (based on Flutter logic hint)
-      // The logic in Flutter hardcoded a number? `+972534261676`. waiting for dynamic input.
-      // Assuming input is passed correctly.
-      const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+      
+      // Format phone number - ensure it has country code
+      let formattedPhone = phoneNumber.trim();
+      if (!formattedPhone.startsWith('+')) {
+        // Default to Israel country code if not provided
+        formattedPhone = '+972' + formattedPhone.replace(/^0/, '');
+      }
+      
+      const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
       setVerificationId(confirmationResult);
       return true;
     } catch (error) {
       console.error("Error sending OTP:", error);
+      
+      // Reset reCAPTCHA on error
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      }
+      
       throw error;
     }
   };
@@ -125,6 +159,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
+    if (typeof window === 'undefined' || !auth) {
+      throw new Error("Google login is only available in the browser");
+    }
+    
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
@@ -202,7 +240,9 @@ export const AuthProvider = ({ children }) => {
     try {
       logLogout();
       await Parse.User.logOut();
-      await signOut(auth);
+      if (auth) {
+        await signOut(auth);
+      }
       setCurrentUser(null);
     } catch (error) {
       console.error("Logout error:", error);

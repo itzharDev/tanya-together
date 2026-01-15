@@ -133,7 +133,12 @@ export default function GroupDetails() {
               )}
               {dedicatedTo && (
                 <div className="flex items-center gap-2 mb-2" style={{ direction: 'rtl' }}>
-                  <img src={getIntentionIcon(intention)} alt="intention" className="w-5 h-5" />
+                  <img 
+                    src={getIntentionIcon(intention)} 
+                    alt="intention" 
+                    className="w-5 h-5" 
+                    style={{ filter: 'brightness(0) saturate(100%) invert(18%) sepia(89%) saturate(1729%) hue-rotate(200deg) brightness(95%) contrast(101%)' }}
+                  />
                   <span className="text-sm text-gray-500">{getIntentionPrefix(intention)} {dedicatedTo}</span>
                 </div>
               )}

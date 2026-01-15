@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import bigLogo from '../assets/icons/big_logo.png';
@@ -7,6 +7,7 @@ import googleIcon from '../assets/icons/google.png';
 export default function Login() {
   const { currentUser, loginWithPhone, verifyOtp, loginWithGoogle, setupRecaptcha } = useAuth();
   const navigate = useNavigate();
+  const recaptchaInitialized = useRef(false);
   
   const [step, setStep] = useState('phone'); // phone, otp
   const [name, setName] = useState('');
@@ -22,30 +23,81 @@ export default function Login() {
   }, [currentUser, navigate]);
 
   useEffect(() => {
-    setupRecaptcha('recaptcha-container');
-  }, [setupRecaptcha]);
+    // Only setup reCAPTCHA once when component mounts
+    if (!recaptchaInitialized.current) {
+      setupRecaptcha('recaptcha-container');
+      recaptchaInitialized.current = true;
+    }
+    
+    // Cleanup function
+    return () => {
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+        recaptchaInitialized.current = false;
+      }
+    };
+  }, []); // Empty dependency array - run only once
 
   const handlePhoneSubmit = async () => {
-    if (!phoneNumber) return;
+    if (!phoneNumber) {
+      alert("אנא הזן מספר טלפון");
+      return;
+    }
+    
+    // Basic validation for Israeli phone numbers
+    const cleanPhone = phoneNumber.replace(/[^0-9+]/g, '');
+    if (!cleanPhone.startsWith('+') && (cleanPhone.length < 9 || cleanPhone.length > 10)) {
+      alert("מספר טלפון לא תקין. אנא הזן מספר תקף");
+      return;
+    }
+    
     setLoading(true);
     try {
       await loginWithPhone(phoneNumber);
       setStep('otp');
     } catch (error) {
-      alert("Error sending code. Please try again.");
+      console.error('Phone login error:', error);
+      
+      let errorMessage = "שגיאה בשליחת הקוד. אנא נסה שוב.";
+      if (error.code === 'auth/invalid-phone-number') {
+        errorMessage = "מספר טלפון לא תקין";
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = "יותר מדי ניסיונות. אנא נסה שוב מאוחר יותר";
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   const handleOtpSubmit = async () => {
-    if (!otp) return;
+    if (!otp) {
+      alert("אנא הזן קוד אימות");
+      return;
+    }
+    
+    if (otp.length !== 6) {
+      alert("קוד האימות חייב להכיל 6 ספרות");
+      return;
+    }
+    
     setLoading(true);
     try {
       await verifyOtp(otp, phoneNumber, name);
       navigate('/feed');
     } catch (error) {
-      alert("Invalid code.");
+      console.error('OTP verification error:', error);
+      
+      let errorMessage = "קוד אימות שגוי";
+      if (error.code === 'auth/invalid-verification-code') {
+        errorMessage = "קוד אימות שגוי. אנא נסה שוב";
+      } else if (error.code === 'auth/code-expired') {
+        errorMessage = "הקוד פג תוקף. אנא בקש קוד חדש";
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }

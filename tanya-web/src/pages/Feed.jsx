@@ -93,6 +93,11 @@ export default function Feed() {
         }
       }
       
+      // Sort global groups by creation date (newest first)
+      if (activeTab === 'global' || !currentUser) {
+        query.descending('createdAt');
+      }
+      
       query.limit(1000);
       const results = await query.find();
       

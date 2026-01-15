@@ -57,16 +57,16 @@ async function createServer() {
       let title, description, image, pageUrl
       
       if (initialData && initialData.name) {
-        title = `ספר ${initialData.name} - תניא מחולק`
-        description = initialData.description || `קרא את ספר ${initialData.name} - תניא המחולק`
+        title = `${initialData.name} - תניא מחולק`
+        description = initialData.description || `למדו תניא ${initialData.name} - תניא המחולק`
         image = initialData.bookImage || 'https://tanya-together.dvarmalchus.co.il/tanya-logo-preview.png'
         pageUrl = `https://tanya.dvarmalchus.co.il${url}`
       } else {
         // Default meta tags for non-group pages
         title = 'תניא מחולק - לימוד תניא ביחד בקבוצות'
         description = 'תניא מחולק - פלטפורמה ללימוד תניא משותף בקבוצות. השלימו את התניא ביחד עם חברים ומשפחה.'
-        image = 'https://tanya.dvarmalchus.co.il/tanya-logo.png'
-        pageUrl = 'https://tanya.dvarmalchus.co.il'
+        image = 'https://tanya-together.dvarmalchus.co.il/tanya-logo-preview.png'
+        pageUrl = 'https://tanya-together.dvarmalchus.co.il'
       }
       
       const metaTags = `

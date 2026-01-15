@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSSR } from '../context/SSRContext';
@@ -25,6 +25,9 @@ export default function Reader() {
   const [pageWidth, setPageWidth] = useState(0);
   const [isClient, setIsClient] = useState(false);
   const [PDFComponents, setPDFComponents] = useState(null);
+  const [showUpdateToast, setShowUpdateToast] = useState(false);
+  const isMountedRef = useRef(true);
+  const initialPartRef = useRef(null);
 
   // Load react-pdf dynamically on client side only
   useEffect(() => {
@@ -85,18 +88,103 @@ export default function Reader() {
     checkMembership();
   }, [group, currentUser, membershipChecked]);
 
-  // Cleanup: remove part from inProgress when component unmounts (client-side only)
+  // Live Query: Subscribe to group changes for real-time updates
+  useEffect(() => {
+    if (typeof window === 'undefined' || !group?.id) return; // Skip on server or if no group
+    
+    let subscription = null;
+    
+    const setupLiveQuery = async () => {
+      try {
+        const query = new Parse.Query('NewGroup');
+        query.equalTo('objectId', group.id);
+        
+        // query.subscribe() returns a Promise that resolves to the subscription
+        subscription = await query.subscribe();
+        
+        subscription.on('update', (updatedGroup) => {
+          // Update local group state with new data
+          const inProgressData = updatedGroup.get('inProgressData') || {};
+          const inProgressArray = Object.keys(inProgressData);
+          const newBook = updatedGroup.get('book') || [];
+          const newBooksReaded = updatedGroup.get('booksReaded') || 0;
+          
+          // Only update if data has actually changed to prevent infinite loops
+          setGroup(prevGroup => {
+            // Check if anything actually changed
+            const bookChanged = JSON.stringify(prevGroup.book) !== JSON.stringify(newBook);
+            const inProgressChanged = JSON.stringify(prevGroup.inProgress) !== JSON.stringify(inProgressArray);
+            const booksReadedChanged = prevGroup.booksReaded !== newBooksReaded;
+            
+            if (!bookChanged && !inProgressChanged && !booksReadedChanged) {
+              return prevGroup; // No changes, return same object to prevent re-render
+            }
+            
+            // Show toast notification only when there are actual changes
+            setShowUpdateToast(true);
+            setTimeout(() => setShowUpdateToast(false), 3000);
+            
+            // Create completely new object to force re-render
+            return {
+              ...prevGroup,
+              book: newBook,
+              inProgress: inProgressArray,
+              booksReaded: newBooksReaded,
+            };
+          });
+        });
+        
+        subscription.on('error', (error) => {
+          console.error('Live Query error:', error);
+        });
+      } catch (error) {
+        console.warn('Live Query not available:', error.message);
+      }
+    };
+    
+    setupLiveQuery();
+    
+    // Cleanup subscription on unmount
+    return () => {
+      if (subscription && typeof subscription.unsubscribe === 'function') {
+        try {
+          subscription.unsubscribe();
+        } catch (error) {
+          // Silent fail
+        }
+      }
+    };
+  }, [group?.id]); // Only re-subscribe if group ID changes
+  
+  // Store the initial part when it's first loaded
+  useEffect(() => {
+    if (part && !initialPartRef.current) {
+      initialPartRef.current = part;
+    }
+  }, [part]);
+  
+  // Cleanup: remove part from inProgress when component actually unmounts (not on re-renders)
   useEffect(() => {
     if (typeof window === 'undefined') return; // Skip on server
     
+    // Mark as mounted
+    isMountedRef.current = true;
+    
     return () => {
-      if (group && part) {
+      // Mark as unmounted
+      isMountedRef.current = false;
+      
+      // Only cleanup if we have a part and group ID
+      const partToCleanup = initialPartRef.current;
+      const groupIdToCleanup = groupId;
+      
+      if (partToCleanup && groupIdToCleanup) {
         // Async cleanup - remove from inProgress if user leaves without finishing
         const cleanup = async () => {
           try {
             const query = new Parse.Query('NewGroup');
-            const g = await query.get(group.id);
-            const partStr = part.toString();
+            const g = await query.get(groupIdToCleanup);
+            const partStr = partToCleanup.toString();
             const inProgressData = g.get('inProgressData') || {};
             
             // Remove from inProgressData
@@ -112,14 +200,14 @@ export default function Reader() {
         cleanup();
       }
     };
-  }, [group, part]);
+  }, []); // Empty deps - only run on mount/unmount
 
   // Update meta tags for social sharing (client-side only)
   useEffect(() => {
     if (typeof document === 'undefined') return; // Skip on server
     
     if (group) {
-      document.title = `ספר ${group.name} - תניא המחולק`;
+      document.title = `${group.name} - תניא המחולק`;
       
       // Update or create meta tags
       const updateMetaTag = (property, content) => {
@@ -132,8 +220,8 @@ export default function Reader() {
         tag.setAttribute('content', content);
       };
 
-      updateMetaTag('og:title', `ספר ${group.name}`);
-      updateMetaTag('og:description', `קרא את ספר ${group.name} - תניא המחולק`);
+      updateMetaTag('og:title', `${group.name}`);
+      updateMetaTag('og:description', `למדו תניא ${group.name} - תניא המחולק`);
       if (group.bookImage) {
         updateMetaTag('og:image', group.bookImage);
       }
@@ -220,14 +308,19 @@ export default function Reader() {
         }
 
         // Update Server: Add to inProgress with timestamp
+        // Refetch to avoid race conditions when multiple tabs open simultaneously
         const partStr = selectedPart.toString();
         if (!localGroup.inProgress.includes(partStr)) {
-             const inProgressData = g.get('inProgressData') || {};
+             // Refetch the latest data to avoid overwriting concurrent changes
+             const freshQuery = new Parse.Query('NewGroup');
+             const freshGroup = await freshQuery.get(groupId);
+             
+             const inProgressData = freshGroup.get('inProgressData') || {};
              inProgressData[partStr] = Date.now(); // Store current timestamp
              
-             g.set('inProgressData', inProgressData);
-             g.set('inProgress', Object.keys(inProgressData)); // Update legacy array
-             await g.save();
+             freshGroup.set('inProgressData', inProgressData);
+             freshGroup.set('inProgress', Object.keys(inProgressData)); // Update legacy array
+             await freshGroup.save();
              
              localGroup.inProgress.push(partStr);
         }
@@ -423,14 +516,17 @@ export default function Reader() {
         return;
       }
       
-      // Add new part to inProgress
+      // Add new part to inProgress - refetch to avoid race conditions
       const newPartStr = newPart.toString();
-      const updatedInProgressData = g.get('inProgressData') || {};
+      const freshQuery = new Parse.Query('NewGroup');
+      const freshGroup = await freshQuery.get(group.id);
+      
+      const updatedInProgressData = freshGroup.get('inProgressData') || {};
       updatedInProgressData[newPartStr] = Date.now();
       
-      g.set('inProgressData', updatedInProgressData);
-      g.set('inProgress', Object.keys(updatedInProgressData));
-      await g.save();
+      freshGroup.set('inProgressData', updatedInProgressData);
+      freshGroup.set('inProgress', Object.keys(updatedInProgressData));
+      await freshGroup.save();
       
       // Construct new URL
       let contentUrl = '';
@@ -641,6 +737,16 @@ export default function Reader() {
                  חזרה לעמוד הראשי
                </button>
              </div>
+           </div>
+         </div>
+       )}
+
+       {/* Update Toast Notification */}
+       {showUpdateToast && (
+         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+           <div className="bg-white border-2 border-[#10AC52] rounded-lg px-6 py-3 shadow-lg flex items-center gap-2">
+             <div className="text-[#10AC52] text-xl">🔄</div>
+             <span className="text-gray-700 font-medium">התקדמות עודכנה</span>
            </div>
          </div>
        )}

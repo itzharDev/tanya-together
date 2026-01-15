@@ -13,12 +13,23 @@ const firebaseConfig = {
   measurementId: "G-DTS5FQYEGM"
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+// reCAPTCHA Enterprise site key for phone authentication
+export const RECAPTCHA_SITE_KEY = "6LejgkssAAAAAO699KVOlxl_EnasETBB53-8aSwF";
+
+// Only initialize Firebase in the browser
+let app = null;
+let auth = null;
+
+if (typeof window !== 'undefined') {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+}
+
+export { auth };
 
 // Initialize Analytics only if supported (not in SSR)
 let analytics = null;
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && app) {
   isSupported().then(yes => {
     if (yes) {
       analytics = getAnalytics(app);

@@ -11,9 +11,9 @@ import Reader from './pages/Reader.jsx'
 import App from './App.jsx'
 
 // Initialize Parse for SSR
-// Use internal Docker network URL
+// Use internal Docker network URL or environment variable
 Parse.initialize('480c8e46-1901-44ab-9b6c-b00d0e3c3416', 'smsLaravMyMasterKey')
-Parse.serverURL = 'http://tanya:3001/parse'
+Parse.serverURL = process.env.PARSE_SERVER_URL || 'http://tanya:3001/parse'
 console.log('SSR: Using Parse Server URL:', Parse.serverURL)
 
 export async function render(url) {

@@ -14,6 +14,9 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
+    // Skip during SSR
+    if (typeof window === 'undefined') return;
+    
     // Fetch initial members count (from Parse _User count) - works for all users
     const fetchMemberCount = async () => {
       try {
@@ -27,28 +30,45 @@ export const SocketProvider = ({ children }) => {
 
     fetchMemberCount();
 
-    // Initialize Socket for both authenticated and anonymous users
-    const newSocket = io('https://tanya.dvarmalchus.co.il', {
-      transports: ['websocket'],
-      autoConnect: true,
-      query: { user: currentUser?.id || 'anonymous' } // Use objectId or anonymous
-    });
+    // Initialize Socket.IO for connection counter (optional feature)
+    // Only available in development mode
+    let newSocket = null;
+    
+    if (import.meta.env.DEV) {
+      const socketUrl = 'http://localhost:3001';
+      
+      try {
+        newSocket = io(socketUrl, {
+          transports: ['websocket'],
+          autoConnect: true,
+          reconnection: false, // Don't keep trying if server doesn't support it
+          timeout: 5000, // 5 second timeout
+          query: { user: currentUser?.id || 'anonymous' }
+        });
 
-    newSocket.on('connect', () => {
-      // Socket connected
-    });
+        newSocket.on('connect', () => {
+          console.log('Socket.IO connected for live stats');
+        });
 
-    newSocket.on('message', (data) => {
-      if (data && data.type === 'connectionsCounter') {
-        setConnections(data.value);
+        newSocket.on('message', (data) => {
+          if (data && data.type === 'connectionsCounter') {
+            setConnections(data.value);
+          }
+        });
+
+        newSocket.on('connect_error', (error) => {
+          console.warn('Socket.IO not available - live connection stats disabled');
+        });
+
+        newSocket.on('disconnect', () => {
+          // Socket disconnected
+        });
+
+        setSocket(newSocket);
+      } catch (error) {
+        console.warn('Socket.IO initialization failed:', error);
       }
-    });
-
-    newSocket.on('disconnect', () => {
-      // Socket disconnected
-    });
-
-    setSocket(newSocket);
+    }
 
     return () => {
       if (newSocket) newSocket.disconnect();
