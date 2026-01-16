@@ -38,11 +38,18 @@ export async function render(url) {
           timeoutPromise
         ])
 
+        const bookType = group.get('bookType') || '1'
+        const bookImage = group.get('bookImage') || 
+          (bookType === '2' 
+            ? 'https://s3.us-east-1.amazonaws.com/DvarMalchus/ads/group-tehilim.png'
+            : 'https://s3.us-east-1.amazonaws.com/DvarMalchus/ads/group-tanya.png')
+        
         initialData = {
           id: group.id,
           name: group.get('name'),
           description: group.get('description') || null,
-          bookImage: group.get('bookImage') || null,
+          bookImage: bookImage,
+          bookType: bookType,
         }
         console.log('SSR: Successfully fetched group:', initialData.name)
       } catch (error) {

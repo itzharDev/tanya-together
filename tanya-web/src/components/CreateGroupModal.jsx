@@ -7,7 +7,6 @@ import menuBookIcon from '../assets/icons/menu_book.png';
 const booksType = [
   { text: 'תניא', icon: tanyaIconImg, type: '1' },
   { text: 'תהילים', icon: menuBookIcon, type: '2' },
-  { text: 'משניות', icon: menuBookIcon, type: '3' },
 ];
 
 export default function CreateGroupModal({ isOpen, onClose, onSubmit, editGroup = null }) {
@@ -125,8 +124,8 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit, editGroup 
 
         {/* Form Content */}
         <div className="bg-[#E9F4FF] p-6 space-y-4">
-          {/* Book Type Selection - Hidden, defaulting to Tanya only */}
-          {/* <div>
+          {/* Book Type Selection */}
+          <div>
             <label className="block text-sm font-bold mb-2 text-right text-gray-800">
               איזה ספר תרצו לחלק?
             </label>
@@ -141,7 +140,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit, editGroup 
                 </option>
               ))}
             </select>
-          </div> */}
+          </div>
 
           {/* Group Name */}
           <div>

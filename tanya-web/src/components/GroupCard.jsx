@@ -28,11 +28,15 @@ export default function GroupCard({ group, index, onEdit, currentUser }) {
     booksReaded = 0,
     description = '',
     dedicatedTo = '',
-    intention = '1'
+    intention = '1',
+    createdAt
   } = group;
 
   const progress = max > 0 ? (book.length / max) * 100 : 0;
   const bookTypeName = getBookTypeName(bookType);
+  
+  // Check if group was created in the last 24 hours
+  const isNew = createdAt && (Date.now() - new Date(createdAt).getTime()) < 24 * 60 * 60 * 1000;
   
   // Check if current user is admin or owner
   const userEmail = currentUser?.get?.('email');
@@ -69,15 +73,46 @@ export default function GroupCard({ group, index, onEdit, currentUser }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border-2 border-transparent hover:border-blue-100 transition-colors h-full">
+    <div className={`bg-white rounded-lg shadow-sm border-2 transition-colors h-full relative overflow-hidden ${
+      isNew ? 'border-[#FE8500]' : 'border-transparent hover:border-blue-100'
+    }`}>
+      {/* New Badge - Diagonal Ribbon */}
+      {isNew && (
+        <div className="absolute top-0 left-0 z-10 pointer-events-none" style={{ width: '0', height: '0' }}>
+          <div 
+            className="absolute text-center text-white font-bold"
+            style={{
+              background: '#FE8500',
+              transform: 'rotate(-45deg)',
+              transformOrigin: 'center center',
+              left: '-35px',
+              top: '10px',
+              width: '120px',
+              padding: '6px 0',
+              fontSize: '13px',
+              letterSpacing: '0.5px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)'
+            }}
+          >
+            חדש
+          </div>
+        </div>
+      )}
+      
       <div className="bg-white rounded-lg p-3 flex flex-col items-stretch space-y-2">
         
         {/* Header: Title | Share */}
         <div className="flex items-start justify-between text-[#04478E]">
-          <div className="flex-grow text-right">
-            <div className="font-bold text-lg line-clamp-2 mb-1">
-              ספר {bookTypeName}: {name}
-            </div>
+          <div className="flex-grow text-right flex items-start justify-start">
+            <div className="flex-grow">
+              <div className="font-bold text-lg line-clamp-2 mb-1 flex items-center justify-start gap-2">
+                <img 
+                  src={bookType === '2' ? '/tehilim-logo.png' : '/tanya-logo.png'} 
+                  alt={bookTypeName} 
+                  className="w-8 h-8 flex-shrink-0"
+                />
+                <span>ספר {bookTypeName}: {name}</span>
+              </div>
             
             {/* Members Avatars under title */}
             <div 
@@ -107,6 +142,7 @@ export default function GroupCard({ group, index, onEdit, currentUser }) {
             {booksReaded > 0 && (
               <div className="text-xs text-gray-500">ספרים שהושלמו: {booksReaded}</div>
             )}
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">

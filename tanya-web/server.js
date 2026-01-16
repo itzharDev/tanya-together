@@ -57,15 +57,20 @@ async function createServer() {
       let title, description, image, pageUrl
       
       if (initialData && initialData.name) {
-        title = `${initialData.name} - תניא מחולק`
-        description = initialData.description || `למדו תניא ${initialData.name} - תניא המחולק`
-        image = initialData.bookImage || 'https://tanya-together.dvarmalchus.co.il/tanya-logo-preview.png'
+        // Determine book type name
+        const bookTypeName = initialData.bookType === '2' ? 'תהילים' : (initialData.bookType === '3' ? 'משניות' : 'תניא')
+        const bookTypeNamePlural = initialData.bookType === '2' ? 'תהילים' : (initialData.bookType === '3' ? 'משניות' : 'תניא')
+        
+        title = `${initialData.name} - ${bookTypeName} מחולק`
+        description = initialData.description || `למדו ${bookTypeNamePlural} ${initialData.name} - ${bookTypeName} המחולק`
+        // Default images are now set in entry-server.jsx, so bookImage should always have a value
+        image = initialData.bookImage
         pageUrl = `https://tanya.dvarmalchus.co.il${url}`
       } else {
         // Default meta tags for non-group pages
-        title = 'תניא מחולק - לימוד תניא ביחד בקבוצות'
-        description = 'תניא מחולק - פלטפורמה ללימוד תניא משותף בקבוצות. השלימו את התניא ביחד עם חברים ומשפחה.'
-        image = 'https://tanya-together.dvarmalchus.co.il/tanya-logo-preview.png'
+        title = 'תניא מחולק ותהילים מחולק - לימוד משותף בקבוצות'
+        description = 'תניא מחולק ותהילים מחולק - פלטפורמה ללימוד תניא ותהילים משותף בקבוצות. השלימו את התניא והתהילים ביחד עם חברים ומשפחה. קבוצות קריאה קהילתיות לתניא ותהילים.'
+        image = 'https://s3.us-east-1.amazonaws.com/DvarMalchus/ads/group-tanya.png'
         pageUrl = 'https://tanya-together.dvarmalchus.co.il'
       }
       
@@ -82,7 +87,7 @@ async function createServer() {
     <meta property="og:description" content="${escapeHtml(description)}" />
     <meta property="og:image" content="${escapeHtml(image)}" />
     <meta property="og:locale" content="he_IL" />
-    <meta property="og:site_name" content="תניא מחולק" />
+    <meta property="og:site_name" content="תניא מחולק ותהילים מחולק" />
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />

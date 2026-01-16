@@ -276,6 +276,12 @@ export default function Reader() {
         // Clean up stale inProgress entries first
         const cleanedInProgressData = await cleanupStaleInProgress(g);
         
+        const bookType = g.get('bookType') || '1';
+        const bookImage = g.get('bookImage') || 
+          (bookType === '2' 
+            ? 'https://s3.us-east-1.amazonaws.com/DvarMalchus/ads/group-tehilim.png'
+            : 'https://s3.us-east-1.amazonaws.com/DvarMalchus/ads/group-tanya.png');
+        
         let localGroup = {
             id: g.id,
             ...g.attributes,
@@ -283,9 +289,9 @@ export default function Reader() {
             book: g.get('book') || [],
             inProgress: Object.keys(cleanedInProgressData),
             max: g.get('max') || 0,
-            bookType: g.get('bookType') || '1',
+            bookType: bookType,
             name: g.get('name'),
-            bookImage: g.get('bookImage') || null,
+            bookImage: bookImage,
             booksReaded: g.get('booksReaded') || 0,
             dedicatedTo: g.get('dedicatedTo') || '',
             intention: g.get('intention') || '1',
@@ -330,8 +336,8 @@ export default function Reader() {
         if (localGroup.bookType === '1' || localGroup.bookType === '3') {
             contentUrl = `https://s3.amazonaws.com/DvarMalchus/tanya/socialTanya/${selectedPart}.pdf`;
         } else if (localGroup.bookType === '2') {
-            const hebrewPart = getHebrewGematria(selectedPart);
-            contentUrl = `https://nerlazadik.co.il/תהילים/תהילים-פרק-${hebrewPart}/`;
+            // Tehilim - use S3 bucket
+            contentUrl = `https://s3.us-east-1.amazonaws.com/DvarMalchus/tehilim/social/${selectedPart}.gif`;
         }
 
         setGroup(localGroup);
@@ -533,8 +539,8 @@ export default function Reader() {
       if (updatedGroup.bookType === '1' || updatedGroup.bookType === '3') {
         contentUrl = `https://s3.amazonaws.com/DvarMalchus/tanya/socialTanya/${newPart}.pdf`;
       } else if (updatedGroup.bookType === '2') {
-        const hebrewPart = getHebrewGematria(newPart);
-        contentUrl = `https://nerlazadik.co.il/תהילים/תהילים-פרק-${hebrewPart}/`;
+        // Tehilim - use S3 bucket  
+        contentUrl = `https://s3.us-east-1.amazonaws.com/DvarMalchus/tehilim/social/${newPart}.gif`;
       }
       
       // Update state
@@ -603,14 +609,15 @@ export default function Reader() {
        {/* Viewer */}
        <div className="flex-grow relative bg-white" style={{ overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
            {group?.bookType === '2' ? (
-               <iframe 
-                 src={url} 
-                 title="Content"
-                 className="w-full h-full border-0"
-                 scrolling="yes"
-                 // Note: Sandbox might block scripts on target site, but needed for security if creating generic viewer
-                 // sandbox="allow-scripts allow-same-origin"
-               />
+               // Tehilim - Display GIF image
+               <div className="w-full flex justify-center p-4">
+                 <img 
+                   src={url} 
+                   alt="Tehilim"
+                   className="max-w-full h-auto shadow-lg"
+                   style={{ marginBottom: '5em' }}
+                 />
+               </div>
            ) : (
                // PDF Viewer using react-pdf (client-side only)
                <div className="w-full flex flex-col items-center py-4">
