@@ -11,7 +11,9 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
-
+tanya-web/mishna_*
+mishna_*
+tanya-web/mishnayot_texts/*
 # IntelliJ related
 *.iml
 *.ipr
