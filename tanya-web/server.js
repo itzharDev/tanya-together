@@ -2,10 +2,16 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
+import Parse from 'parse/node.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const isProduction = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'prod'
 const port = process.env.PORT || 5173
+
+// Initialize Parse for sitemap generation
+Parse.initialize('480c8e46-1901-44ab-9b6c-b00d0e3c3416', 'smsLaravMyMasterKey')
+Parse.serverURL = process.env.PARSE_SERVER_URL || 'http://tanya:3001/parse'
+console.log('Parse Server URL:', Parse.serverURL)
 
 async function createServer() {
   const app = express()
@@ -22,6 +28,75 @@ async function createServer() {
     // Serve static files in production
     app.use(express.static(path.resolve(__dirname, 'dist/client'), { index: false }))
   }
+
+  // Robots.txt endpoint
+  app.get('/robots.txt', (req, res) => {
+    const robotsTxt = `User-agent: *
+Allow: /
+
+Sitemap: https://tanya.dvarmalchus.co.il/sitemap.xml
+`
+    res.header('Content-Type', 'text/plain')
+    res.status(200).send(robotsTxt)
+  })
+
+  // Sitemap endpoint
+  app.get('/sitemap.xml', async (req, res) => {
+    try {
+      console.log('Generating sitemap...')
+      const query = new Parse.Query('NewGroup')
+      query.limit(10000) // Get all groups
+      const groups = await query.find()
+
+      const baseUrl = 'https://tanya.dvarmalchus.co.il'
+      const now = new Date().toISOString()
+
+      // Build sitemap XML
+      let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n'
+      sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+
+      // Add homepage
+      sitemap += '  <url>\n'
+      sitemap += `    <loc>${baseUrl}</loc>\n`
+      sitemap += `    <lastmod>${now}</lastmod>\n`
+      sitemap += '    <changefreq>daily</changefreq>\n'
+      sitemap += '    <priority>1.0</priority>\n'
+      sitemap += '  </url>\n'
+
+      // Add feed page
+      sitemap += '  <url>\n'
+      sitemap += `    <loc>${baseUrl}/feed</loc>\n`
+      sitemap += `    <lastmod>${now}</lastmod>\n`
+      sitemap += '    <changefreq>daily</changefreq>\n'
+      sitemap += '    <priority>0.9</priority>\n'
+      sitemap += '  </url>\n'
+
+      // Add all groups
+      for (const group of groups) {
+        const groupId = group.id
+        const updatedAt = group.get('updatedAt') || group.get('createdAt')
+        const lastmod = updatedAt ? updatedAt.toISOString() : now
+        const isGlobal = group.get('global')
+        
+        sitemap += '  <url>\n'
+        sitemap += `    <loc>${baseUrl}/group/${groupId}</loc>\n`
+        sitemap += `    <lastmod>${lastmod}</lastmod>\n`
+        sitemap += '    <changefreq>weekly</changefreq>\n'
+        // Global groups get higher priority
+        sitemap += `    <priority>${isGlobal ? '0.8' : '0.6'}</priority>\n`
+        sitemap += '  </url>\n'
+      }
+
+      sitemap += '</urlset>'
+
+      console.log(`Sitemap generated with ${groups.length} groups`)
+      res.header('Content-Type', 'application/xml')
+      res.status(200).send(sitemap)
+    } catch (error) {
+      console.error('Error generating sitemap:', error)
+      res.status(500).send('Error generating sitemap')
+    }
+  })
 
   // Main handler for all routes (placed before Vite middlewares so it catches everything)
   app.use('*', async (req, res, next) => {
